@@ -685,6 +685,26 @@ function levelDef(n,noStones,noCombo){
 // ---------- state ----------
 const cv=document.getElementById('c'),ctx=cv.getContext('2d'),wrap=document.getElementById('wrap');
 let cw=0,ch=0,L={},S=null;
+// Progress carried in from another copy of the game: #lv=467 jumps to a level,
+// #save=<base64url JSON> restores a whole save. Applied once, then wiped from the address bar.
+(function(){
+  const h=location.hash||'';if(!/[#&](lv|save)=/.test(h))return;
+  try{
+    const lv=h.match(/[#&]lv=(\d+)/);
+    if(lv){const v=Math.max(0,(+lv[1])-1);
+      localStorage.setItem('antpix-level',String(v));
+      localStorage.setItem('antpix-max',String(Math.max(v,parseInt(localStorage.getItem('antpix-max')||'0',10)||0)));
+      localStorage.removeItem('antpix-state');}
+    const sv=h.match(/[#&]save=([A-Za-z0-9_\-]+)/);
+    if(sv){
+      const j=JSON.parse(decodeURIComponent(escape(atob(sv[1].replace(/-/g,'+').replace(/_/g,'/')))));
+      if(j.level!=null)localStorage.setItem('antpix-level',String(j.level));
+      if(j.max!=null)localStorage.setItem('antpix-max',String(Math.max(j.max,j.level||0)));
+      if(j.state)localStorage.setItem('antpix-state',j.state);else localStorage.removeItem('antpix-state');}
+    localStorage.setItem('antpix-updated',String(Date.now()));
+  }catch(e){}
+  try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+})();
 let saved=0,maxLv=0;try{saved=parseInt(localStorage.getItem('antpix-level')||'0',10)||0;maxLv=Math.max(saved,parseInt(localStorage.getItem('antpix-max')||'0',10)||0)}catch(e){}
 let speed=1;
 
