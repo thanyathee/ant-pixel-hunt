@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>มดเก็บพิกเซล</title>
+<meta name="description" content="เกมปริศนาเก็บพิกเซลด้วยฝูงมด เล่นฟรี ไม่มีโฆษณา">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="favicon-32.png" sizes="32x32">
+<link rel="icon" href="icon-192.png" sizes="192x192">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="มดเก็บพิกเซล">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f3cfa6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#3a2b24" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#f3cfa6; --tray:#ecdccb; --tray-edge:#d9c1a8; --ink:#3b2418; --soft:#7a5a45;
+  --go:#46c63a; --go-edge:#2e8f25; --chip:#fff7ee;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#3a2b24; --tray:#4a3a31; --tray-edge:#2c211b; --ink:#fbeee2; --soft:#c9ad98; --chip:#54433a;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#3a2b24; --tray:#4a3a31; --tray-edge:#2c211b; --ink:#fbeee2; --soft:#c9ad98; --chip:#54433a;
+}
+html,body{height:100%;margin:0}
+body{
+  background:var(--ground);color:var(--ink);
+  font-family:'Mitr',system-ui,-apple-system,'Noto Sans Thai',sans-serif;
+  display:flex;flex-direction:column;align-items:center;overflow:hidden;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
+}
+header{width:100%;max-width:480px;display:flex;align-items:center;gap:7px;padding:10px 12px 4px;box-sizing:border-box;flex-wrap:nowrap}
+.logo{font-weight:600;font-size:19px;line-height:1;letter-spacing:.2px;min-width:0;flex:0 1 auto;overflow:hidden}
+.logo small{display:block;font-size:11.5px;font-weight:500;color:var(--soft);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp{flex:1}
+button{font:inherit;cursor:pointer;border:0}
+.chip{white-space:nowrap;flex:none;background:var(--chip);color:var(--ink);border-radius:999px;padding:7px 12px;font-size:14px;box-shadow:0 3px 0 var(--tray-edge)}
+.chip:active{transform:translateY(2px);box-shadow:0 1px 0 var(--tray-edge)}
+.chip.on{background:var(--go);color:#fff;box-shadow:0 3px 0 var(--go-edge)}
+button:focus-visible{outline:3px solid #2a8cff;outline-offset:2px}
+.bar{width:calc(100% - 28px);max-width:452px;height:6px;border-radius:6px;background:var(--tray-edge);overflow:hidden;margin:4px 0 0}
+.bar i{display:block;height:100%;width:0;background:var(--go);transition:width .2s}
+#wrap{flex:1;width:100%;max-width:480px;position:relative;min-height:0}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.toast{position:absolute;left:50%;top:10px;transform:translate(-50%,-8px);background:var(--chip);color:var(--ink);padding:8px 14px;border-radius:999px;font-size:14px;box-shadow:0 3px 0 var(--tray-edge);opacity:0;transition:.25s;z-index:6;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.ov{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(40,20,10,.45);z-index:5;padding:20px;box-sizing:border-box}
+.ov.show{display:flex}
+.card{max-height:82vh;overflow-y:auto;background:var(--chip);color:var(--ink);border-radius:22px;padding:22px 22px 18px;max-width:320px;text-align:center;box-shadow:0 8px 0 var(--tray-edge)}
+.card h2{margin:0 0 6px;font-size:26px}
+.card p{margin:0 0 16px;color:var(--soft);font-size:15px;line-height:1.55}
+.jump{display:flex;gap:8px;margin:0 0 14px}
+.jump input{flex:1;min-width:0;font:inherit;font-size:16px;text-align:center;color:var(--ink);background:var(--tray);border:0;border-radius:12px;padding:10px 8px;box-shadow:0 3px 0 var(--tray-edge)}
+.jump .lvb{flex:none;padding:10px 14px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:0 0 16px}
+.lvb{background:var(--tray);color:var(--ink);border-radius:12px;padding:10px 0;font-size:16px;box-shadow:0 3px 0 var(--tray-edge)}
+.lvb:disabled{opacity:.35;cursor:default}
+.lvb.cur{background:var(--go);color:#fff;box-shadow:0 3px 0 var(--go-edge)}
+.ghost{background:none;color:var(--soft);font-size:15px;padding:6px 12px}
+.big{background:var(--go);color:#fff;font-size:20px;font-weight:600;padding:12px 30px;border-radius:16px;box-shadow:0 5px 0 var(--go-edge)}
+.big:active{transform:translateY(3px);box-shadow:0 2px 0 var(--go-edge)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">มดเก็บพิกเซล<small id="lv">ด่าน 1</small></div>
+  <div class="sp"></div>
+  <button class="chip" id="menu">ด่าน</button>
+  <button class="chip" id="spd" aria-pressed="false">▶▶ 2x</button>
+  <button class="chip" id="rst">เริ่มใหม่</button>
+</header>
+<div class="bar"><i id="prog"></i></div>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div class="toast" id="toast" role="status"></div>
+  <div class="ov" id="ov"><div class="card"><h2 id="ovT"></h2><p id="ovP"></p><div id="ovX"></div><button class="big" id="ovB"></button></div></div>
+</div>
+<script>
+(function(){
+const PAL={K:'#362b39',W:'#f7f5fb',Y:'#ffe04a',O:'#ff9a2e',R:'#ff463d',P:'#fd7995',G:'#44d36a',D:'#227e77',B:'#3489fe',C:'#3fe0f5',V:'#8f6bfe',N:'#ae5240',T:'#ffcf8a',M:'#f446b2',S:'#9e9aa3',L:'#ffbae0',Q:'#6f5d40'};
+// Each colour has a shadow twin (lowercase) in its own colour family, so a split shape still reads as itself.
+// Checked so that every pair of colours in the palette sits at least 24 CIE-Lab apart — nothing on a tray
+// should be hard to tell apart at tile size.
+const SHADE={W:'w',T:'t',O:'o',Y:'y',R:'r',N:'n',G:'g',C:'c',B:'b',P:'p',M:'m',V:'v',D:'d',L:'l',S:'s'};
+Object.assign(PAL,{w:'#256893',t:'#6e7d12',o:'#bbdc74',y:'#a7ff00',r:'#880753',n:'#ff006f',
+  g:'#00ffda',c:'#0e8142',b:'#0300ad',p:'#8a279b',m:'#b914ff',v:'#152f79',
+  d:'#61bbfd',l:'#f662ff',s:'#e891f2',k:'#9a6596'});
+const LIGHT={W:1,Y:1,T:1,C:1,L:1,d:1,g:1,o:1,s:1,y:1};
+const rgbOf=h=>{const n=parseInt(PAL[h].slice(1),16);return[n>>16,n>>8&255,n&255]};
+const farApart=(a,b)=>{const p=rgbOf(a),q=rgbOf(b);return Math.hypot((p[0]-q[0])*1.1,(p[1]-q[1])*1.4,(p[2]-q[2])*0.9)};
+
+// difficulty curve: fewer slots, bigger boxes, less preview, more shuffled order as levels go up
+function cfg(n){
+  const k=Math.min(n,119);
+  const combo=false; // off: one tray, one picture
+  return{
+    combo,
+    scale: n<MAXLEVEL?1:(combo?1:2), // a two-picture tray is already wide, so it stays at the coarser size
+    maxAnt: n<MAXLEVEL?12:22,   // how many of one box's ants can be out at once
+    antGap: n<MAXLEVEL?0.3:0.22, // a new ant leaves the nest this often, so the trail never stops
+    bg: k>=40,
+    stones: n>=120&&n%3!==0,   // rocks the ants can never carry — they just block the way
+    frozen: false,             // off: a two-trip pixel needs a marking, and markings make the picture noisy
+    mystery: n>=180&&n%5<2,    // boxes that hide their colour until you place them
+    shades: n<30?0 : n<80?1 : n<140?2 : n<220?3 : 4, // how many shapes get a lit side and a shadow side
+    bands: n<60?1 : n<160?2 : 3,                      // the backdrop is this many colours, in stripes
+    slots: k<5?6 : k<30?5 : k<60?4 : 3,
+    preview: k<10?3 : k<35?2 : 1,
+    spread: 0.4+k*0.22,
+    chunkMin: 6+Math.round(k*0.07),
+    chunkSpan: 12+Math.round(k*0.18)
+  };
+}
+
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shade(hex,a){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=v=>Math.max(0,Math.min(255,Math.round(a<0?v*(1+a):v+(255-v)*a)));return`rgb(${f(r)},${f(g)},${f(b)})`}
+
+let MKSCALE=1,BGCOLOR=null; // higher scale = the same picture drawn at finer resolution (more, smaller pixels)
+function mk(w,h,fn){
+  const s=MKSCALE,W=w*s,H=h*s;
+  const g=Array.from({length:H},()=>Array(W).fill(null));
+  const put=(X,Y,c)=>{if(X>=0&&Y>=0&&X<W&&Y<H)g[Y][X]=c};
+  const raw=(X,Y)=>(X>=0&&Y>=0&&X<W&&Y<H)?g[Y][X]:null;
+  const A={
+    px(x,y,c){const X=Math.round(x*s),Y=Math.round(y*s);for(let j=0;j<s;j++)for(let i=0;i<s;i++)put(X+i,Y+j,c)},
+    get(x,y){return raw(Math.round(x*s),Math.round(y*s))},
+    fill(f){for(let Y=0;Y<H;Y++)for(let X=0;X<W;X++){const c=f((X+.5)/s,(Y+.5)/s,g[Y][X]);if(c!==undefined)g[Y][X]=c}},
+    ell(cx,cy,rx,ry,c){A.fill((x,y)=>((x-cx)/rx)**2+((y-cy)/ry)**2<=1?c:undefined)},
+    circ(cx,cy,r,c){A.ell(cx,cy,r,r,c)},
+    poly(p,c){A.fill((x,y)=>{let ins=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const[xi,yi]=p[i],[xj,yj]=p[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)ins=!ins}return ins?c:undefined})},
+    line(x0,y0,x1,y1,c){const n=Math.ceil(Math.max(Math.abs(x1-x0),Math.abs(y1-y0))*2*s);for(let i=0;i<=n;i++){const t=i/n;A.px(x0+(x1-x0)*t,y0+(y1-y0)*t,c)}},
+    dots(n,seed,test,cs){const r=rng(seed);let k=0,g2=0;while(k<n&&g2++<800){const x=Math.floor(r()*w),y=Math.floor(r()*h);if(test(A.get(x,y),x,y)){A.px(x,y,cs[k%cs.length]);k++}}},
+    rect(x0,y0,rw,rh,c){const X=Math.round(x0*s),Y=Math.round(y0*s);for(let j=0;j<rh*s;j++)for(let i=0;i<rw*s;i++)put(X+i,Y+j,c)},
+    outline(c){for(let pass=0;pass<s;pass++){const add=[];
+      for(let Y=0;Y<H;Y++)for(let X=0;X<W;X++)if(!g[Y][X]){let n=false;
+        for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if((dx||dy)&&raw(X+dx,Y+dy))n=true;
+        if(n)add.push([X,Y])}
+      add.forEach(([X,Y])=>g[Y][X]=c)}}
+  };
+  fn(A);return g;
+}
+
+const LEVELS=[
+  {name:'ไข่ดาว',make:()=>mk(16,16,A=>{
+    A.ell(8,8,6.5,6,'W');A.circ(8.6,8.3,3,'O');A.circ(8.6,8.3,2.1,'Y');A.outline('K');})},
+  {name:'แตงโม',make:()=>mk(22,14,A=>{
+    A.fill((x,y)=>{if(y<1.5)return;const d=Math.hypot(x-11,y-1.5);if(d<=10)return d>9.1?'D':d>8.1?'G':d>7.2?'W':'R'});
+    [[7,4],[11,5],[15,4],[9,7],[13,7],[11,9],[6,2],[16,2]].forEach(([x,y])=>A.px(x,y,'K'));A.outline('K');})},
+  {name:'โดนัท',make:()=>mk(20,20,A=>{
+    A.circ(10,10,8.5,'T');
+    A.fill((x,y)=>{const d=Math.hypot(x-10,y-10),a=Math.atan2(y-10,x-10);if(d<=7.1+.9*Math.sin(a*6))return'M'});
+    A.circ(10,10,2.8,null);
+    const r=rng(7),cs=['Y','C','W','G','B'];let n=0,guard=0;
+    while(n<24&&guard++<500){const x=Math.floor(r()*20),y=Math.floor(r()*20);if(A.get(x,y)==='M'){A.px(x,y,cs[n%5]);n++}}
+    A.outline('K');})},
+  {name:'เบอร์เกอร์',make:()=>mk(22,20,A=>{
+    A.fill((x,y)=>y<8&&((x-11)/9.5)**2+((y-7.5)/5.5)**2<=1?'O':undefined);
+    [[7,4],[11,3],[15,4],[9,6],[13,6],[5,6],[17,6]].forEach(([x,y])=>{if(A.get(x,y)==='O')A.px(x,y,'W')});
+    A.rect(1,8,20,1,'G');for(let x=2;x<20;x++)if(x%3)A.px(x,9,'G');
+    A.rect(2,10,18,1,'Y');
+    A.rect(2,11,18,3,'N');[[2,11],[19,11],[2,13],[19,13]].forEach(([x,y])=>A.px(x,y,null));
+    [[6,11],[12,11],[16,11],[12,12]].forEach(([x,y])=>A.px(x,y,'Y'));
+    A.rect(3,14,16,1,'R');
+    A.rect(2,15,18,3,'T');A.px(2,17,null);A.px(19,17,null);
+    A.outline('K');})},
+  {name:'ราเมง',make:()=>mk(24,22,A=>{
+    A.fill((x,y)=>y<10&&((x-12)/10)**2+((y-10)/3.6)**2<=1?'T':undefined);
+    A.fill((x,y)=>y<10&&((x-12)/7)**2+((y-9.6)/4.6)**2<=1?(((Math.floor(x)+Math.floor(y)*2)%4<2)?'Y':'O'):undefined);
+    A.ell(7,7.6,2.6,2.2,'W');A.circ(7,7.9,1.2,'O');
+    A.rect(15,3,3,6,'D');
+    [[10,6],[12,5],[13,8],[9,9],[11,8],[19,8]].forEach(([x,y])=>A.px(x,y,'G'));
+    A.fill((x,y)=>y>=10&&((x-12)/11)**2+((y-10)/9)**2<=1?'R':undefined);
+    A.rect(1,10,22,1,'P');
+    A.fill((x,y,c)=>c==='R'&&y>=13&&y<14?'P':undefined);
+    A.fill((x,y,c)=>c==='R'&&y>=15&&y<16&&Math.floor(x)%3===0?'W':undefined);
+    A.outline('K');})},
+  {name:'ไอศกรีม',make:()=>mk(18,24,A=>{
+    A.poly([[5,12],[13,12],[9,23]],'T');A.fill((x,y,c)=>c==='T'&&((Math.floor(x)+Math.floor(y))%3===0||(Math.floor(x)-Math.floor(y)+30)%3===0)?'O':undefined);
+    A.circ(9,10.5,4.8,'P');A.circ(9,6,3.8,'N');A.circ(9,2.4,1.3,'R');
+    A.dots(6,3,c=>c==='N',['Y','C','W']);A.outline('K');})},
+  {name:'สตรอว์เบอร์รี',make:()=>mk(18,20,A=>{
+    A.ell(9,10,7,5.5,'R');A.poly([[2.2,10.5],[15.8,10.5],[9,18.6]],'R');
+    A.fill((x,y,c)=>c==='R'&&Math.floor(y)%3===0&&(Math.floor(x)+Math.floor(y))%4===0?'Y':undefined);
+    A.poly([[3.5,5],[14.5,5],[9,8.5]],'G');A.rect(8,2,2,3,'D');A.outline('K');})},
+  {name:'พิซซ่า',make:()=>mk(22,20,A=>{
+    A.poly([[1.5,2],[20.5,2],[11,19]],'Y');A.fill((x,y,c)=>c==='Y'&&y<4.6?'O':undefined);
+    A.circ(7.5,7.5,1.9,'R');A.circ(14.5,7.5,1.9,'R');A.circ(11,12.5,1.9,'R');
+    [[10,7],[6,10],[15,11],[12,16]].forEach(([x,y])=>A.px(x,y,'G'));[[17,5],[9,10],[4,5]].forEach(([x,y])=>A.px(x,y,'N'));
+    A.outline('K');})},
+  {name:'คัพเค้ก',make:()=>mk(20,22,A=>{
+    A.poly([[3,12],[17,12],[15,21],[5,21]],'B');A.fill((x,y,c)=>c==='B'&&Math.floor(x)%3===0?'C':undefined);
+    A.ell(10,11.3,8,2.3,'L');A.ell(10,8.5,6.2,3,'L');A.ell(10,5.6,3.8,2.4,'L');A.circ(10,2.4,1.5,'R');
+    A.dots(9,11,c=>c==='L',['M','Y','C']);A.outline('K');})},
+  {name:'ซูชิ',make:()=>mk(24,16,A=>{
+    A.ell(12,10,10,4.5,'W');A.ell(12,6.5,10.5,3.2,'O');
+    A.fill((x,y,c)=>c==='O'&&(Math.floor(x)+Math.floor(y))%4===0?'T':undefined);
+    A.fill((x,y,c)=>c&&x>=10&&x<14?'D':undefined);A.outline('K');})},
+  {name:'ข้าวเหนียวมะม่วง',make:()=>mk(24,18,A=>{
+    A.ell(12,13,11.5,4,'B');A.ell(12,12.7,10.3,3.1,'C');
+    A.ell(8,9.5,5.5,4,'W');[[7,8],[9,9],[6,10],[10,7]].forEach(([x,y])=>A.px(x,y,'K'));
+    A.ell(16.5,9.5,5.5,3.4,'Y');A.fill((x,y,c)=>c==='Y'&&x>12&&Math.floor(x)%3===0?'O':undefined);
+    A.outline('K');})},
+  {name:'เชอร์รี่',make:()=>mk(20,20,A=>{
+    A.line(6,11,11,3,'D');A.line(13,11,11,3,'D');A.ell(14.5,4,3,1.5,'G');
+    A.circ(6.5,14,4.3,'R');A.circ(13.5,14.5,4.3,'R');A.px(5,12,'W');A.px(12,12,'W');A.px(4,13,'P');A.px(11,13,'P');
+    A.outline('K');})},
+  {name:'ขนมปังปิ้ง',make:()=>mk(20,20,A=>{
+    A.rect(2,6,16,12,'O');A.circ(5.5,6,3.5,'O');A.circ(14.5,6,3.5,'O');
+    A.rect(3,7,14,10,'T');A.circ(5.5,6.5,2.4,'T');A.circ(14.5,6.5,2.4,'T');
+    A.rect(8,11,4,3,'Y');A.px(6,9,'K');A.px(13,9,'K');A.px(5,11,'P');A.px(14,11,'P');
+    A.outline('K');})},
+  {name:'แอปเปิล',make:()=>mk(20,20,A=>{
+    A.circ(7.5,11.5,6.2,'R');A.circ(12.5,11.5,6.2,'R');A.px(5,8,'W');A.px(5,9,'W');A.px(6,8,'W');
+    A.rect(9,2,2,4,'N');A.ell(14,4,3,1.5,'G');A.outline('K');})},
+  {name:'ชาไทย',make:()=>mk(18,24,A=>{
+    A.poly([[3,7],[15,7],[13.5,22],[4.5,22]],'O');A.fill((x,y,c)=>c==='O'&&y<10?'T':undefined);
+    A.rect(6,12,2,2,'W');A.rect(10,14,2,2,'W');A.rect(7,17,2,2,'W');
+    A.ell(9,6.5,6.5,2,'W');A.rect(10,1,2,5,'G');A.outline('K');})},
+  {name:'ส้ม',make:()=>mk(20,20,A=>{
+    A.circ(10,11,7.5,'O');A.px(6,8,'T');A.px(6,9,'T');A.px(7,7,'T');
+    A.rect(9,2,2,2,'N');A.ell(13,3.5,2.8,1.4,'G');A.outline('K');})},
+  {name:'กล้วย',make:()=>mk(24,14,A=>{
+    A.fill((x,y)=>{const d=Math.hypot(x-12,y+4);return d>=11&&d<=15&&x>2.5&&x<21.5?(d<11.9?'O':'Y'):undefined});
+    A.fill((x,y,c)=>c&&(x<4||x>20)?'N':undefined);A.outline('K');})},
+  {name:'ไก่ทอด',make:()=>mk(22,20,A=>{
+    A.line(12,11,18,16,'W');A.line(13,11,19,16,'W');A.circ(18.6,17.6,1.3,'W');A.circ(19.9,16.2,1.3,'W');
+    A.ell(9,9,6.8,5.8,'O');A.fill((x,y,c)=>c==='O'&&(Math.floor(x)*7+Math.floor(y)*3)%5===0?'N':undefined);
+    A.fill((x,y,c)=>c==='O'&&(Math.floor(x)*3+Math.floor(y)*5)%7===0?'Y':undefined);A.outline('K');})},
+  {name:'ฮอทดอก',make:()=>mk(24,14,A=>{
+    A.ell(12,8.5,11,3.5,'T');A.ell(12,6.5,10.8,2,'R');
+    for(let x=4;x<20;x++)A.px(x,6+(x%2),'Y');A.ell(12,9.6,9.5,1.6,'T');A.outline('K');})},
+  {name:'มะพร้าว',make:()=>mk(22,18,A=>{
+    A.fill((x,y)=>{if(y<6)return;const d=Math.hypot(x-11,y-6);return d<=9.5?(d>8.2?'N':'W'):undefined});
+    A.ell(11,6.5,8.2,1.8,'C');A.line(14,6,17,1,'M');A.line(15,6,18,1,'M');A.outline('K');})},
+  {name:'ลูกอม',make:()=>mk(24,14,A=>{
+    A.poly([[7.5,7],[2,2.5],[2,11.5]],'P');A.poly([[16.5,7],[22,2.5],[22,11.5]],'P');
+    A.circ(12,7,4.3,'M');A.fill((x,y,c)=>c==='M'&&(Math.floor(x)+Math.floor(y))%3===0?'W':undefined);A.outline('K');})},
+  {name:'แพนเค้ก',make:()=>mk(22,20,A=>{
+    A.ell(11,16.5,10,2.2,'C');
+    for(let i=0;i<4;i++){A.ell(11,14-i*2.6,8.5,1.8,'O');A.ell(11,13.5-i*2.6,8.3,1.4,'T')}
+    A.ell(11,6.4,6,1.2,'N');[[5,7],[5,8],[16,8],[16,9],[12,8]].forEach(([x,y])=>A.px(x,y,'N'));
+    A.rect(9,3,4,2,'Y');A.outline('K');})},
+  {name:'ขวดนม',make:()=>mk(16,24,A=>{
+    A.rect(3,8,10,14,'W');A.poly([[3,9],[13,9],[10.5,5],[5.5,5]],'W');A.rect(5,4,6,2,'W');A.rect(5,2,6,2,'B');
+    A.rect(3,12,10,5,'C');A.px(7,14,'M');A.px(8,14,'M');A.px(7,15,'M');A.px(8,15,'M');
+    A.px(3,21,null);A.px(12,21,null);A.outline('K');})},
+  {name:'ข้าวปั้น',make:()=>mk(22,20,A=>{
+    A.poly([[11,1.5],[20.5,17.5],[1.5,17.5]],'W');A.fill((x,y,c)=>c==='W'&&x>=7&&x<15&&y>=12?'D':undefined);
+    A.px(8,9,'K');A.px(13,9,'K');A.px(7,10,'P');A.px(14,10,'P');A.outline('K');})},
+  {name:'เค้กชิ้น',make:()=>mk(22,18,A=>{
+    A.poly([[2,6],[20,3],[20,15],[2,15]],'T');
+    A.fill((x,y,c)=>c==='T'&&((y>=9&&y<10)||(y>=12&&y<13))?'W':undefined);
+    A.fill((x,y,c)=>c&&y<6-(x-2)/6+1.4?'P':undefined);A.circ(16,2.2,1.6,'R');A.px(16,1,'G');A.outline('K');})},
+  {name:'อมยิ้ม',make:()=>mk(18,24,A=>{
+    A.rect(8,13,2,10,'W');
+    A.fill((x,y)=>{const d=Math.hypot(x-9,y-8);if(d>6.5)return;const a=Math.atan2(y-8,x-9);const k=Math.floor((a/Math.PI+1)*3+d*.55);return['M','W','C'][((k%3)+3)%3]});
+    A.outline('K');})},
+  {name:'แครอท',make:()=>mk(18,24,A=>{
+    A.poly([[9,8],[5,2],[8,3]],'G');A.poly([[9,8],[13,2],[10,3]],'G');A.poly([[8.5,8],[9,1.5],[10.5,8]],'D');
+    A.poly([[4,8],[14,8],[9,22.5]],'O');[[7,11],[8,11],[10,14],[11,14],[8,17]].forEach(([x,y])=>A.px(x,y,'N'));A.outline('K');})},
+  {name:'องุ่น',make:()=>mk(20,22,A=>{
+    A.line(10,5,11,1,'N');A.ell(14,3,2.8,1.4,'G');
+    [[5.5,7.5],[10,7.5],[14.5,7.5],[7.7,11.5],[12.3,11.5],[10,15.5]].forEach(([x,y],i)=>{A.circ(x,y,2.4,i%3===1?'M':'V');A.px(Math.floor(x)-1,Math.floor(y)-1,'W')});
+    A.outline('K');})},
+  {name:'เฟรนช์ฟรายส์',make:()=>mk(20,22,A=>{
+    for(let k=0;k<7;k++)A.rect(4+k*2,2+(k*2%3),1,10,'Y');
+    A.poly([[2,9],[18,9],[16,21],[4,21]],'R');A.circ(10,15,2,'Y');A.outline('K');})},
+  {name:'ทาโก้',make:()=>mk(24,16,A=>{
+    A.ell(12,5,9.5,2,'G');A.ell(12,5.8,8.5,1.2,'N');[[6,4],[10,3],[15,4],[18,5]].forEach(([x,y])=>A.px(x,y,'R'));
+    A.fill((x,y)=>{if(y<5.5)return;const d=Math.hypot(x-12,y-5);return d<=10?(d>8.8?'O':'Y'):undefined});A.outline('K');})},
+  {name:'มะม่วง',make:()=>mk(20,18,A=>{
+    A.ell(10,10,7,5.5,'Y');A.fill((x,y,c)=>c==='Y'&&x<9&&y<9?'O':undefined);
+    A.rect(12,3,1,3,'N');A.ell(15,4,2.6,1.3,'G');A.outline('K');})},
+  {name:'สับปะรด',make:()=>mk(18,24,A=>{
+    A.ell(9,15,6,7,'T');A.fill((x,y,c)=>c==='T'&&(Math.floor(x)+Math.floor(y))%3===0?'O':undefined);
+    for(let k=-2;k<=2;k++)A.line(9,10,9+k*2.4,2+Math.abs(k),'G');A.outline('K');})},
+  {name:'กีวี',make:()=>mk(18,18,A=>{
+    A.circ(9,9,7.5,'N');A.circ(9,9,6.5,'G');A.circ(9,9,2,'W');
+    for(let i=0;i<10;i++)A.px(Math.round(9+Math.cos(i/10*6.28)*4-.5),Math.round(9+Math.sin(i/10*6.28)*4-.5),'K');A.outline('K');})},
+  {name:'เลม่อน',make:()=>mk(20,20,A=>{
+    A.circ(10,10,8,'Y');A.circ(10,10,6.8,'T');
+    for(let i=0;i<4;i++)A.line(10,10,10+Math.cos(i*.785+.4)*7,10+Math.sin(i*.785+.4)*7,'W'),A.line(10,10,10-Math.cos(i*.785+.4)*7,10-Math.sin(i*.785+.4)*7,'W');
+    A.outline('K');})},
+  {name:'บลูเบอร์รี่',make:()=>mk(20,16,A=>{
+    [[6,9],[11,6.5],[15,10]].forEach(([x,y])=>{A.circ(x,y,3.2,'B');A.px(Math.floor(x)-1,Math.floor(y)-2,'V');A.px(Math.floor(x),Math.floor(y)-3,'D')});
+    A.outline('K');})},
+  {name:'พีช',make:()=>mk(20,20,A=>{
+    A.circ(7.5,11,5.8,'P');A.circ(12.5,11,5.8,'P');A.fill((x,y,c)=>c==='P'&&x>11.5?'R':undefined);
+    A.rect(9,3,1,3,'N');A.ell(13,4,2.6,1.3,'G');A.outline('K');})},
+  {name:'ลูกแพร์',make:()=>mk(18,22,A=>{
+    A.circ(9,15,5.5,'G');A.ell(9,8.5,3.6,4.5,'G');A.px(6,13,'W');A.px(6,14,'W');
+    A.rect(9,2,1,4,'N');A.ell(12,3,2.4,1.2,'D');A.outline('K');})},
+  {name:'มะนาว',make:()=>mk(18,16,A=>{
+    A.ell(9,9,6.5,5,'G');A.px(2,9,'G');A.px(15,9,'G');A.px(6,6,'W');A.px(7,6,'W');
+    A.ell(12,3,2.4,1.2,'D');A.outline('K');})},
+  {name:'เมล่อน',make:()=>mk(22,20,A=>{
+    A.circ(11,11,8,'G');A.fill((x,y,c)=>c==='G'&&(Math.floor(x)*3+Math.floor(y)*5)%7===0?'W':undefined);
+    A.rect(10,2,2,3,'D');A.outline('K');})},
+  {name:'มังคุด',make:()=>mk(20,20,A=>{
+    A.circ(10,12,6.5,'V');A.ell(10,6,4,2,'G');A.rect(9,3,2,3,'D');A.px(7,10,'M');A.px(8,9,'M');A.outline('K');})},
+  {name:'ไข่ต้ม',make:()=>mk(20,14,A=>{
+    A.ell(6,7,4.2,5,'W');A.circ(6,7,2,'Y');A.ell(14.5,7,4.2,5,'W');A.circ(14.5,7,2,'Y');A.outline('K');})},
+  {name:'เบคอน',make:()=>mk(24,14,A=>{
+    for(const y0 of[3,8])for(let x=2;x<22;x++){const y=y0+Math.round(Math.sin(x/2)*1.2);A.rect(x,y,1,3,'R');A.px(x,y+1,'W')}
+    A.outline('K');})},
+  {name:'ชีส',make:()=>mk(22,18,A=>{
+    A.poly([[3,4],[19,4],[19,15],[3,15]],'Y');A.fill((x,y,c)=>c==='Y'&&y<4+ (x-3)*0.35?undefined:c==='Y'?'Y':undefined);
+    A.fill((x,y,c)=>c==='Y'&&y<3.5+(x-3)*0.45?'T':undefined);
+    A.circ(12,11,1.6,null);A.circ(16,8,1.2,null);A.circ(8,12,1,null);A.outline('K');})},
+  {name:'โยเกิร์ต',make:()=>mk(16,20,A=>{
+    A.poly([[3,6],[13,6],[11.5,18],[4.5,18]],'W');A.rect(2,4,12,2,'P');A.rect(4,9,8,4,'P');A.px(7,10,'W');A.px(8,11,'W');A.outline('K');})},
+  {name:'ขนมปังก้อน',make:()=>mk(22,18,A=>{
+    A.ell(11,11,9,5.5,'T');A.fill((x,y,c)=>c==='T'&&y<8?'O':undefined);
+    [[6,6],[10,5],[14,6]].forEach(([x,y])=>A.line(x,y,x+2,y+2,'N'));A.outline('K');})},
+  {name:'ครัวซองต์',make:()=>mk(24,16,A=>{
+    A.fill((x,y)=>{const d=Math.hypot(x-12,y-14);return y<13&&d>=6&&d<=9.5?'T':undefined});
+    A.fill((x,y,c)=>c==='T'&&Math.floor(x)%4===0?'O':undefined);
+    A.circ(4,12,1.6,'T');A.circ(20,12,1.6,'T');A.outline('K');})},
+  {name:'พาย',make:()=>mk(22,16,A=>{
+    A.ell(11,10,9.5,4.5,'R');A.fill((x,y,c)=>c==='R'&&(Math.floor(x)+Math.floor(y))%4<1?'T':undefined);
+    A.fill((x,y,c)=>c&&y>12?'T':undefined);A.outline('K');})},
+  {name:'มัฟฟิน',make:()=>mk(18,20,A=>{
+    A.poly([[4,11],[14,11],[12.5,19],[5.5,19]],'N');A.fill((x,y,c)=>c==='N'&&Math.floor(x)%3===0?'P':undefined);
+    A.ell(9,9,7,4,'T');A.dots(6,21,c=>c==='T',['K']);A.outline('K');})},
+  {name:'คุกกี้',make:()=>mk(18,18,A=>{
+    A.circ(9,9,7,'T');A.dots(8,5,c=>c==='T',['N','K']);A.outline('K');})},
+  {name:'ช็อกโกแลต',make:()=>mk(22,14,A=>{
+    A.rect(3,3,16,8,'N');A.fill((x,y,c)=>c==='N'&&(Math.floor(x)%4===2||Math.floor(y)%4===2)?'K':undefined);
+    A.rect(3,11,16,2,'S');A.outline('K');})},
+  {name:'ชาไข่มุก',make:()=>mk(16,24,A=>{
+    A.poly([[3,5],[13,5],[12,22],[4,22]],'T');A.fill((x,y,c)=>c==='T'&&y<10?'W':undefined);
+    [[6,18],[9,19],[11,17],[7,20],[10,21]].forEach(([x,y])=>A.circ(x,y,1.3,'K'));
+    A.rect(2,3,12,2,'C');A.rect(10,1,2,5,'P');A.outline('K');})},
+  {name:'กาแฟร้อน',make:()=>mk(22,18,A=>{
+    A.circ(17,11,3,'W');A.circ(17,11,1.6,null);
+    A.rect(4,7,12,9,'W');A.rect(5,8,10,2,'N');A.px(4,15,null);A.px(15,15,null);
+    A.rect(2,16,16,1,'C');A.outline('K');})},
+  {name:'น้ำส้มคั้น',make:()=>mk(16,22,A=>{
+    A.poly([[3,6],[13,6],[12,20],[4,20]],'C');A.fill((x,y,c)=>c==='C'&&y>8?'O':undefined);
+    A.circ(12,5,2.2,'O');A.px(12,5,'W');A.line(9,6,12,1,'R');A.outline('K');})},
+  {name:'โซดากระป๋อง',make:()=>mk(14,22,A=>{
+    A.rect(3,4,8,16,'R');A.rect(3,3,8,1,'S');A.rect(3,10,8,2,'W');A.rect(3,19,8,1,'S');A.px(5,6,'W');A.outline('K');})},
+  {name:'ขวดน้ำ',make:()=>mk(14,24,A=>{
+    A.rect(3,8,8,14,'C');A.rect(5,5,4,3,'C');A.rect(5,3,4,2,'B');A.rect(3,13,8,4,'W');A.outline('K');})},
+  {name:'แก้วไวน์',make:()=>mk(16,24,A=>{
+    A.fill((x,y)=>y>=4&&y<12&&((x-8)/5)**2+((y-6.5)/5.5)**2<=1?'M':undefined);
+    A.rect(7,12,2,7,'W');A.rect(4,19,8,1,'W');A.outline('K');})},
+  {name:'มิลค์เชค',make:()=>mk(16,24,A=>{
+    A.poly([[4,8],[12,8],[11,21],[5,21]],'W');A.fill((x,y,c)=>c==='W'&&y>10?'P':undefined);
+    A.ell(8,6,4.5,2.5,'W');A.circ(8,3,1.4,'R');A.rect(10,2,1,7,'C');A.outline('K');})},
+  {name:'น้ำแข็งใส',make:()=>mk(18,22,A=>{
+    A.poly([[4,10],[14,10],[12,20],[6,20]],'C');A.ell(9,9,5.5,4,'W');
+    A.fill((x,y,c)=>c==='W'&&(Math.floor(x)+Math.floor(y))%3===0?'M':undefined);
+    A.fill((x,y,c)=>c==='W'&&(Math.floor(x)*2+Math.floor(y))%5===0?'G':undefined);A.outline('K');})},
+  {name:'ไอติมแท่ง',make:()=>mk(14,24,A=>{
+    A.rect(3,3,8,13,'M');A.px(3,3,null);A.px(10,3,null);A.rect(3,6,8,1,'W');A.rect(6,15,2,7,'T');A.outline('K');})},
+  {name:'ป๊อปคอร์น',make:()=>mk(20,22,A=>{
+    [[6,8],[10,6],[14,8],[8,5],[12,4]].forEach(([x,y],i)=>A.circ(x,y,2,i%2?'T':'W'));
+    A.poly([[3,10],[17,10],[15,21],[5,21]],'R');A.fill((x,y,c)=>c==='R'&&Math.floor(x)%4<2?'W':undefined);A.outline('K');})},
+  {name:'ข้าวผัด',make:()=>mk(24,16,A=>{
+    A.ell(12,10,11,4.5,'W');A.ell(12,9,8,3.2,'Y');
+    A.dots(10,31,c=>c==='Y',['R','G','O']);A.outline('K');})},
+  {name:'ไข่เจียว',make:()=>mk(22,16,A=>{
+    A.ell(11,9,9,5,'Y');A.fill((x,y,c)=>c==='Y'&&((x-11)/8)**2+((y-9)/4)**2>0.55?'O':undefined);
+    A.px(8,7,'W');A.px(9,7,'W');A.outline('K');})},
+  {name:'ลูกชิ้นปิ้ง',make:()=>mk(22,16,A=>{
+    A.line(3,12,19,4,'T');A.line(3,13,19,5,'T');
+    [[6,11],[10,9],[14,7],[17,5]].forEach(([x,y])=>{A.circ(x,y,2.2,'N');A.px(Math.floor(x)-1,Math.floor(y)-1,'R')});A.outline('K');})},
+  {name:'ไส้กรอก',make:()=>mk(22,14,A=>{
+    A.ell(11,7,9,3,'R');A.fill((x,y,c)=>c==='R'&&Math.floor(x)%5===0?'N':undefined);A.outline('K');})},
+  {name:'สเต๊ก',make:()=>mk(22,18,A=>{
+    A.ell(11,10,9,6,'N');A.ell(11,10,6,3.5,'R');
+    [[5,6],[8,5],[11,4]].forEach(([x,y])=>A.line(x,y+2,x+6,y+8,'K'));A.outline('K');})},
+  {name:'ปลาย่าง',make:()=>mk(24,14,A=>{
+    A.ell(10,7,8,4,'S');A.poly([[18,7],[23,3],[23,11]],'S');
+    A.px(5,6,'K');A.fill((x,y,c)=>c==='S'&&x>8&&Math.floor(x)%4===0?'C':undefined);A.outline('K');})},
+  {name:'กุ้ง',make:()=>mk(20,18,A=>{
+    A.fill((x,y)=>{const d=Math.hypot(x-10,y-12);return y<12.5&&d>=4.5&&d<=7?'P':undefined});
+    A.poly([[3,12],[1.5,8],[5,10]],'R');A.px(15,7,'K');A.outline('K');})},
+  {name:'พริก',make:()=>mk(16,22,A=>{
+    A.fill((x,y)=>((x-8)/3.5)**2+((y-13.5)/7)**2<=1?'R':undefined);
+    A.rect(8,4,1,4,'G');A.ell(8,7.5,2.5,1.2,'G');A.px(6,11,'P');A.outline('K');})},
+  {name:'ข้าวโพด',make:()=>mk(16,24,A=>{
+    A.ell(8,13,5,9,'Y');A.fill((x,y,c)=>c==='Y'&&(Math.floor(x)+Math.floor(y))%2===0?'O':undefined);
+    A.poly([[3,10],[1,16],[4,20]],'G');A.poly([[13,10],[15,16],[12,20]],'G');A.outline('K');})},
+  {name:'บรอกโคลี',make:()=>mk(20,22,A=>{
+    A.rect(8,12,4,8,'T');[[7,7],[11,6],[14,8],[9,10],[13,11]].forEach(([x,y])=>A.circ(x,y,3,'G'));
+    A.dots(12,41,c=>c==='G',['D']);A.outline('K');})},
+  {name:'เห็ด',make:()=>mk(18,20,A=>{
+    A.rect(7,11,4,7,'W');A.ell(9,8,7,4.5,'R');A.dots(6,13,c=>c==='R',['W']);A.outline('K');})},
+  {name:'ฟักทอง',make:()=>mk(22,20,A=>{
+    A.circ(11,12,7,'O');A.fill((x,y,c)=>c==='O'&&Math.floor(x)%4===0?'N':undefined);
+    A.rect(10,3,2,3,'G');A.outline('K');})},
+  {name:'มะเขือเทศ',make:()=>mk(20,20,A=>{
+    A.circ(10,12,6.5,'R');A.px(7,9,'W');A.px(8,8,'W');
+    [[10,6],[8,6],[12,6],[9,5],[11,5]].forEach(([x,y])=>A.px(x,y,'G'));A.rect(9,3,1,3,'D');A.outline('K');})},
+  {name:'แตงกวา',make:()=>mk(22,14,A=>{
+    A.ell(11,7,9,3.2,'G');A.fill((x,y,c)=>c==='G'&&Math.floor(x)%3===0?'D':undefined);A.outline('K');})},
+  {name:'หัวหอม',make:()=>mk(18,20,A=>{
+    A.circ(9,12,6.5,'V');A.fill((x,y,c)=>c==='V'&&Math.floor(x)%3===0?'M':undefined);
+    A.line(9,6,7,2,'G');A.line(9,6,11,2,'G');A.outline('K');})},
+  {name:'มาการอง',make:()=>mk(22,14,A=>{
+    A.ell(11,5,8,2.8,'P');A.ell(11,10,8,2.8,'P');A.rect(3,7,16,2,'W');A.outline('K');})},
+  {name:'เยลลี่หมี',make:()=>mk(16,22,A=>{
+    A.circ(5,4.5,1.4,'G');A.circ(11,4.5,1.4,'G');A.circ(8,6,3.2,'G');A.ell(8,14,4.5,6,'G');
+    A.circ(3.5,11,1.8,'G');A.circ(12.5,11,1.8,'G');A.circ(5.5,19,1.8,'G');A.circ(10.5,19,1.8,'G');
+    A.px(7,5,'K');A.px(9,5,'K');A.outline('K');})},
+  {name:'เค้กวันเกิด',make:()=>mk(24,20,A=>{
+    A.rect(3,8,18,9,'P');A.rect(3,7,18,1,'W');A.fill((x,y,c)=>c==='P'&&Math.floor(y)%3===0&&Math.floor(x)%4===0?'W':undefined);
+    [7,12,17].forEach(x=>{A.rect(x,3,1,4,'W');A.px(x,2,'Y');A.px(x,1,'O')});A.outline('K');})},
+  {name:'ชูรอส',make:()=>mk(20,20,A=>{
+    for(let k=0;k<3;k++)for(let y=3;y<17;y++)A.rect(3+k*6+(y%4<2?0:1),y,3,1,'T');
+    A.dots(14,17,c=>c==='T',['W']);A.outline('K');})},
+  {name:'ขนมไหว้พระจันทร์',make:()=>mk(20,20,A=>{
+    A.rect(3,5,14,12,'T');[[3,5],[16,5],[3,16],[16,16]].forEach(([x,y])=>A.px(x,y,null));
+    A.rect(5,7,10,8,'O');A.circ(10,11,1.6,'W');
+    [[10,8],[10,14],[7,11],[13,11]].forEach(([x,y])=>A.px(x,y,'W'));A.outline('K');})},
+  {name:'ต้มยำกุ้ง',make:()=>mk(24,18,A=>{
+    A.ell(12,12,11,5.5,'W');A.ell(12,10,9.5,4,'R');
+    A.fill((x,y,c)=>c==='R'&&(Math.floor(x)+Math.floor(y))%5===0?'O':undefined);
+    A.fill((x,y)=>{const d=Math.hypot(x-8,y-9);return y<10&&d>=2&&d<=3.4?'P':undefined});
+    [[15,8],[17,10],[13,11]].forEach(([x,y])=>A.circ(x,y,1.4,'T'));
+    [[6,11],[11,8],[19,9],[16,12]].forEach(([x,y])=>A.px(x,y,'G'));
+    A.rect(1,13,22,1,'S');A.outline('K');})},
+  {name:'ผัดไทย',make:()=>mk(24,16,A=>{
+    A.ell(12,10,11,5,'W');
+    for(let k=0;k<7;k++){const y=6+k;A.fill((x,yy)=>yy>=y&&yy<y+1&&Math.abs(x-12)<9-Math.abs(k-3)?'Y':undefined)}
+    [[7,8],[16,9],[10,12],[18,11]].forEach(([x,y])=>A.circ(x,y,1.3,'P'));
+    [[9,7],[14,13],[19,8]].forEach(([x,y])=>A.px(x,y,'G'));
+    A.rect(3,13,6,1,'O');A.outline('K');})},
+  {name:'ส้มตำ',make:()=>mk(22,18,A=>{
+    A.ell(11,12,10,5.5,'W');
+    A.fill((x,y)=>y>=7&&y<14&&Math.hypot((x-11)/9,(y-11)/4)<=1?((Math.floor(x)*3+Math.floor(y)*5)%4<2?'G':'T'):undefined);
+    [[6,10],[14,9],[17,12],[9,13]].forEach(([x,y])=>A.px(x,y,'R'));
+    [[8,9],[12,12],[16,10]].forEach(([x,y])=>A.px(x,y,'N'));
+    A.outline('K');})},
+  {name:'ไก่ย่าง',make:()=>mk(22,18,A=>{
+    A.ell(10,10,7,5.5,'N');
+    A.fill((x,y,c)=>c==='N'&&Math.floor(y)%3===0?'O':undefined);
+    A.line(16,10,20,14,'W');A.line(17,10,21,14,'W');A.circ(20.5,14.5,1.4,'W');
+    A.outline('K');})},
+  {name:'ข้าวมันไก่',make:()=>mk(24,16,A=>{
+    A.ell(12,10,11,5,'W');A.ell(8,9.5,5,3.5,'T');
+    A.rect(13,6,7,5,'W');A.fill((x,y,c)=>c==='W'&&x>13&&y>7&&y<10?'T':undefined);
+    [[15,12],[18,12]].forEach(([x,y])=>A.px(x,y,'G'));A.circ(21,12,1.4,'O');A.outline('K');})},
+  {name:'บะหมี่ถ้วย',make:()=>mk(18,22,A=>{
+    A.poly([[3,7],[15,7],[13,20],[5,20]],'W');
+    A.fill((x,y,c)=>c==='W'&&y>10&&y<14?'R':undefined);
+    A.ell(9,6.5,7,2,'Y');A.ell(9,6,6,1.4,'O');
+    A.rect(11,1,2,6,'T');A.outline('K');})},
+  {name:'โรตี',make:()=>mk(22,16,A=>{
+    A.ell(11,9,9.5,5.5,'T');A.dots(10,61,c=>c==='T',['O','N']);
+    A.fill((x,y,c)=>c==='T'&&y>11?'O':undefined);
+    A.line(4,5,18,5,'Y');A.line(5,12,17,12,'Y');A.outline('K');})},
+  {name:'ทุเรียน',make:()=>mk(20,20,A=>{
+    A.ell(10,11,7.5,6.5,'G');
+    A.fill((x,y,c)=>c==='G'&&(Math.floor(x)+Math.floor(y))%3===0?'D':undefined);
+    A.fill((x,y,c)=>c==='G'&&(Math.floor(x)-Math.floor(y)+20)%4===0?'Y':undefined);
+    A.rect(9,2,2,3,'N');A.outline('K');})},
+  {name:'แก้วมังกร',make:()=>mk(20,20,A=>{
+    A.ell(10,11,7,6.5,'M');
+    [[3,8],[16,8],[5,15],[15,15],[10,4]].forEach(([x,y])=>A.circ(x,y,2,'G'));
+    A.ell(10,11,4,3.5,'W');A.dots(10,71,c=>c==='W',['K']);A.outline('K');})},
+  {name:'ฝรั่ง',make:()=>mk(18,18,A=>{
+    A.circ(9,10,6.8,'G');A.circ(9,10,3.4,'W');A.dots(6,81,c=>c==='W',['P']);
+    A.rect(9,2,1,3,'N');A.ell(12,3,2.4,1.2,'D');A.outline('K');})},
+  {name:'ปู',make:()=>mk(24,16,A=>{
+    A.ell(12,9,7,4,'R');A.px(9,8,'W');A.px(15,8,'W');
+    [[5,6],[19,6]].forEach(([x,y])=>{A.circ(x,y,2.2,'R');A.px(x,y,'P')});
+    for(let k=0;k<3;k++){A.line(6,11+k,3,13+k,'R');A.line(18,11+k,21,13+k,'R')}
+    A.px(10,10,'K');A.px(14,10,'K');A.outline('K');})},
+  {name:'หอยแครง',make:()=>mk(20,16,A=>{
+    A.fill((x,y)=>y>=4&&Math.hypot((x-10)/8,(y-13)/9)<=1?'P':undefined);
+    for(let k=-3;k<=3;k++)A.line(10,13,10+k*2.6,4.5,'M');
+    A.outline('K');})},
+  {name:'ปลาหมึก',make:()=>mk(20,22,A=>{
+    A.ell(10,8,5.5,6,'P');A.px(8,6,'W');
+    A.px(8,9,'K');A.px(12,9,'K');
+    for(let k=-2;k<=2;k++)A.line(10+k*2,13,10+k*3.2,20,'M');
+    A.outline('K');})},
+  {name:'น้ำผึ้ง',make:()=>mk(18,20,A=>{
+    A.ell(9,12,6,6.5,'O');A.rect(5,5,8,3,'O');A.rect(4,3,10,2,'N');
+    A.rect(6,10,6,4,'Y');A.px(8,11,'N');A.px(9,12,'N');A.outline('K');})},
+  {name:'แยม',make:()=>mk(16,20,A=>{
+    A.rect(3,7,10,12,'M');A.rect(3,5,10,2,'P');A.rect(2,3,12,2,'R');
+    A.rect(5,10,6,4,'W');A.px(7,11,'R');A.px(9,12,'R');
+    A.px(3,18,null);A.px(12,18,null);A.outline('K');})},
+  {name:'เนย',make:()=>mk(20,14,A=>{
+    A.poly([[3,5],[17,5],[17,11],[3,11]],'Y');A.poly([[3,5],[17,5],[15,3],[5,3]],'T');
+    A.poly([[17,5],[17,11],[15,9],[15,3]],'O');A.outline('K');})},
+  {name:'นมกล่อง',make:()=>mk(16,22,A=>{
+    A.rect(3,6,10,14,'W');A.poly([[3,6],[13,6],[8,2]],'W');
+    A.rect(3,10,10,5,'B');A.px(7,12,'W');A.px(8,12,'W');
+    A.rect(7,2,2,2,'C');A.outline('K');})},
+  {name:'ชาเขียว',make:()=>mk(18,22,A=>{
+    A.poly([[4,7],[14,7],[13,21],[5,21]],'G');
+    A.fill((x,y,c)=>c==='G'&&y<12?'W':undefined);
+    A.ell(9,6.5,6,2,'W');A.rect(11,1,2,6,'C');
+    A.px(8,15,'D');A.px(10,17,'D');A.outline('K');})},
+  {name:'เบียร์',make:()=>mk(18,22,A=>{
+    A.rect(3,7,10,14,'O');A.fill((x,y,c)=>c==='O'&&(Math.floor(x)+Math.floor(y))%5===0?'Y':undefined);
+    A.ell(8,6.5,6,2.5,'W');A.circ(5,4.5,1.6,'W');A.circ(11,4.5,1.6,'W');
+    A.rect(13,10,3,6,'T');A.rect(14,11,1,4,null);A.outline('K');})},
+  {name:'ค็อกเทล',make:()=>mk(18,22,A=>{
+    A.poly([[2,5],[16,5],[9,14]],'C');
+    A.fill((x,y,c)=>c==='C'&&y<8?'M':undefined);
+    A.rect(8,14,2,5,'W');A.rect(5,19,8,1,'W');
+    A.circ(14,3,1.6,'O');A.line(12,6,15,1,'G');A.outline('K');})},
+  {name:'สมูทตี้โบวล์',make:()=>mk(22,16,A=>{
+    A.fill((x,y)=>y>=6&&Math.hypot((x-11)/9,(y-7)/7)<=1?'M':undefined);
+    A.ell(11,6,9,1.6,'P');
+    [[6,7],[9,8],[15,7]].forEach(([x,y])=>A.circ(x,y,1.3,'R'));
+    [[12,9],[17,9]].forEach(([x,y])=>A.circ(x,y,1.2,'V'));
+    A.dots(8,91,c=>c==='M',['T']);A.outline('K');})},
+  {name:'วาฟเฟิล',make:()=>mk(20,20,A=>{
+    A.ell(10,12,8,6.5,'T');
+    A.fill((x,y,c)=>c==='T'&&(Math.floor(x)%3===0||Math.floor(y)%3===0)?'O':undefined);
+    A.ell(10,8,4.5,2.2,'W');A.circ(10,5,1.6,'R');A.outline('K');})},
+  {name:'บราวนี่',make:()=>mk(20,16,A=>{
+    A.rect(3,6,14,8,'N');A.rect(3,5,14,2,'K');
+    A.dots(8,101,c=>c==='N',['T']);
+    A.rect(4,14,12,1,'W');A.outline('K');})},
+  {name:'ชีสเค้ก',make:()=>mk(20,18,A=>{
+    A.poly([[3,5],[17,5],[15,15],[5,15]],'T');
+    A.fill((x,y,c)=>c==='T'&&y>12?'N':undefined);
+    A.ell(10,5,7,1.6,'W');A.rect(4,4,12,2,'R');
+    A.circ(10,3,1.4,'M');A.outline('K');})},
+  {name:'ทาร์ตผลไม้',make:()=>mk(20,16,A=>{
+    A.ell(10,10,8.5,4.5,'T');A.ell(10,9,7,3.4,'W');
+    [[6,9],[10,8],[14,9]].forEach(([x,y])=>A.circ(x,y,1.5,'R'));
+    [[8,11],[12,11]].forEach(([x,y])=>A.circ(x,y,1.3,'V'));
+    A.px(16,9,'G');A.outline('K');})},
+  {name:'เพรทเซล',make:()=>mk(22,20,A=>{
+    A.fill((x,y)=>{const d=Math.hypot(x-11,y-12);return d>=5.5&&d<=7.5?'N':undefined});
+    A.fill((x,y)=>{const d=Math.hypot(x-7,y-7);return d>=2.5&&d<=4?'N':undefined});
+    A.fill((x,y)=>{const d=Math.hypot(x-15,y-7);return d>=2.5&&d<=4?'N':undefined});
+    A.dots(12,111,c=>c==='N',['W']);A.outline('K');})},
+  {name:'เบเกิล',make:()=>mk(20,18,A=>{
+    A.ell(10,10,8,6.5,'T');A.ell(10,10,3,2.2,null);
+    A.fill((x,y,c)=>c==='T'&&y<8?'O':undefined);
+    A.dots(10,121,c=>c==='T'||c==='O',['K','W']);A.outline('K');})},
+  {name:'แซนด์วิช',make:()=>mk(22,18,A=>{
+    A.poly([[2,15],[20,15],[11,3]],'T');
+    A.fill((x,y,c)=>c==='T'&&y>7&&y<9?'G':undefined);
+    A.fill((x,y,c)=>c==='T'&&y>=10&&y<11.5?'R':undefined);
+    A.fill((x,y,c)=>c==='T'&&y>=12&&y<13.5?'Y':undefined);
+    A.outline('K');})},
+  {name:'สลัด',make:()=>mk(22,16,A=>{
+    A.fill((x,y)=>y>=7&&Math.hypot((x-11)/10,(y-8)/7)<=1?'W':undefined);
+    [[6,8],[10,7],[15,8],[8,11],[13,10],[17,10]].forEach(([x,y],i)=>A.circ(x,y,2.2,i%2?'G':'D'));
+    [[9,9],[16,12],[12,12]].forEach(([x,y])=>A.circ(x,y,1.3,'R'));
+    A.px(7,12,'O');A.outline('K');})},
+  {name:'ซุป',make:()=>mk(22,16,A=>{
+    A.ell(11,10,10,5,'W');A.ell(11,8.5,8,3.4,'O');
+    [[8,8],[14,9],[11,10]].forEach(([x,y])=>A.circ(x,y,1.2,'N'));
+    [[9,10],[16,8]].forEach(([x,y])=>A.px(x,y,'G'));
+    A.rect(1,11,20,1,'S');A.outline('K');})},
+  {name:'มันฝรั่ง',make:()=>mk(20,16,A=>{
+    A.ell(10,9,7.5,5,'N');A.dots(8,131,c=>c==='N',['T','K']);A.outline('K');})},
+  {name:'อะโวคาโด',make:()=>mk(18,20,A=>{
+    A.ell(9,12,6,7,'D');A.ell(9,8,4,4.5,'D');
+    A.ell(9,11.5,4.2,5,'G');A.ell(9,8.3,2.6,3,'G');
+    A.circ(9,12.5,2.4,'N');A.outline('K');})},
+  {name:'มะเขือม่วง',make:()=>mk(18,22,A=>{
+    A.ell(9,14,5.5,7,'V');A.fill((x,y,c)=>c==='V'&&x<8?'M':undefined);
+    A.ell(9,7,3.4,2.4,'G');A.rect(8,3,2,4,'D');A.outline('K');})},
+  {name:'พริกหวาน',make:()=>mk(20,20,A=>{
+    A.ell(6.5,13,4,6,'R');A.ell(13.5,13,4,6,'R');A.ell(10,13,4,6.5,'R');
+    A.px(4,10,'P');A.px(5,9,'P');
+    A.ell(10,6.5,3,1.6,'G');A.rect(9,3,2,4,'D');A.outline('K');})},
+  {name:'โมจิ',make:()=>mk(20,16,A=>{
+    A.ell(6,11,5,4.5,'W');A.ell(6,10.4,3.4,3,'L');
+    A.ell(14,11,5,4.5,'P');A.ell(14,10.4,3.4,3,'M');
+    A.px(4,8,'L');A.px(12,8,'L');
+    A.rect(3,15,14,1,'T');A.outline('K');})},
+  {name:'ดังโงะ',make:()=>mk(14,24,A=>{
+    A.rect(6,14,2,9,'T');
+    A.circ(7,4,3.2,'G');A.circ(7,8.5,3.2,'W');A.circ(7,13,3.2,'P');
+    A.px(5,3,'L');A.px(5,7.5,'L');A.px(5,12,'L');A.outline('K');})},
+  {name:'ทาโกะยากิ',make:()=>mk(22,16,A=>{
+    [[6,6],[16,6],[6,12],[16,12],[11,9]].forEach(([x,y])=>{A.circ(x,y,3.2,'T');
+      A.fill((xx,yy,c)=>c==='T'&&Math.hypot(xx-x,yy-y)>2.2?'O':undefined)});
+    A.fill((x,y,c)=>c&&(Math.floor(x)+Math.floor(y)*2)%7===0?'N':undefined);
+    [[5,4],[15,4],[10,7],[14,11]].forEach(([x,y])=>A.px(x,y,'G'));A.outline('K');})},
+  {name:'เกี๊ยว',make:()=>mk(22,16,A=>{
+    A.fill((x,y)=>y>=7&&Math.hypot((x-11)/8.5,(y-13)/6.5)<=1?'T':undefined);
+    A.fill((x,y,c)=>c==='T'&&y>9&&y<12&&Math.abs(x-11)<5?'O':undefined);
+    for(let k=-3;k<=3;k++){A.circ(11+k*2.6,6.5,1.8,'W');A.px(11+k*2.6,8,'S')}
+    A.rect(2,14,18,1,'S');A.outline('K');})},
+  {name:'ซาลาเปา',make:()=>mk(20,18,A=>{
+    A.ell(10,11,7.5,6,'W');
+    for(let k=0;k<5;k++)A.line(10,11,10+Math.cos(k*1.26-1.57)*7,11+Math.sin(k*1.26-1.57)*6,'S');
+    A.circ(10,5,1.6,'W');A.px(10,4,'R');A.outline('K');})},
+  {name:'ปอเปี๊ยะ',make:()=>mk(24,14,A=>{
+    A.ell(12,7,10,3.4,'T');
+    A.fill((x,y,c)=>c==='T'&&Math.floor(x)%6<2?'O':undefined);
+    A.px(2,7,'G');A.px(21,7,'G');A.outline('K');})},
+];
+
+const MAXLEVEL=100;
+const rot90=g=>{const H=g.length,W=g[0].length,o=[];
+  for(let x=0;x<W;x++){const row=[];for(let y=H-1;y>=0;y--)row.push(g[y][x]);o.push(row)}return o};
+// two pictures on one tray, side by side with a gap — the pairing is what makes these boards new
+function joinSide(a,b){
+  const H=Math.max(a.length,b.length),GAP=2,W=a[0].length+GAP+b[0].length,o=[];
+  const pad=(g,y)=>{const dy=Math.floor((H-g.length)/2);return (y>=dy&&y<dy+g.length)?g[y-dy]:null};
+  for(let y=0;y<H;y++){const ra=pad(a,y),rb=pad(b,y),row=[];
+    for(let x=0;x<a[0].length;x++)row.push(ra?ra[x]:null);
+    for(let x=0;x<GAP;x++)row.push(null);
+    for(let x=0;x<b[0].length;x++)row.push(rb?rb[x]:null);
+    o.push(row)}
+  return o;
+}
+function levelDef(n,noStones,noCombo){
+  const d=cfg(n),base=LEVELS[n%LEVELS.length],v=Math.floor(n/LEVELS.length);
+  MKSCALE=d.scale;BGCOLOR=null;let g=base.make();MKSCALE=1;
+  let comboName='';
+  if(d.combo&&!noCombo){ // pair it with a different picture so the whole tray is a board never seen before
+    const other=LEVELS[(n*37+13)%LEVELS.length];
+    if(other!==base){MKSCALE=d.scale;const g2=other.make();MKSCALE=1;
+      g=(n&1)?joinSide(g,g2):joinSide(g2,g);comboName=' + '+other.name}
+  }
+  const pass=v;
+  if(v&4)g=rot90(g);                                // quarter turn
+  if(v&1)g=g.map(r=>r.slice().reverse());          // mirrored
+  if(v&2)g=g.slice().reverse();                     // upside down
+  // every picture keeps its own real colours; the extra colours are shading, so the shapes still read
+  const H0=g.length,W0=g[0].length;
+  if(d.shades){ // give the biggest shapes a lit side and a shadow side, light falling from the upper left
+    const area={},box={},used=[];
+    for(let y=0;y<H0;y++)for(let x=0;x<W0;x++){const c=g[y][x];if(!c)continue;
+      if(used.indexOf(c)<0)used.push(c);
+      area[c]=(area[c]||0)+1;const bb=box[c]=box[c]||[x,y,x,y];
+      if(x<bb[0])bb[0]=x;if(y<bb[1])bb[1]=y;if(x>bb[2])bb[2]=x;if(y>bb[3])bb[3]=y}
+    Object.keys(area).filter(c=>SHADE[c]&&area[c]>=20&&used.indexOf(SHADE[c])<0)
+      .sort((a,b)=>area[b]-area[a]).slice(0,d.shades)
+      .forEach(c=>{const sh=SHADE[c];used.push(sh);
+        const[x0,y0,x1,y1]=box[c],w=Math.max(1,x1-x0),h=Math.max(1,y1-y0);
+        for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)
+          if(g[y][x]===c&&(x-x0)/w+(y-y0)/h>1.08)g[y][x]=sh});
+  }
+  if(d.bg){ // like the arcade version: the whole tray is covered, so the picture sits in a field of backdrop pixels
+    const used=[];g.forEach(r=>r.forEach(c=>{if(c&&used.indexOf(c)<0)used.push(c)}));
+    const far=farApart;
+    const pool=['C','L','B','V','S','T','G','P','W','D','M','N','b','v','g','p','c','t','s','m','w','y','o','n'];
+    const picked=[];
+    for(let slot=0;slot<Math.max(1,d.bands);slot++){
+      let best=null,bs=-1;
+      pool.forEach((c,i)=>{if(used.indexOf(c)>=0||picked.indexOf(c)>=0)return;
+        const against=used.concat(picked);
+        const sc=Math.min(...against.map(u=>far(c,u)))+((i+n+slot)%3)*4; // small rotation so levels differ
+        if(sc>bs){bs=sc;best=c}});
+      if(best)picked.push(best);
+    }
+    const bands=picked.length;
+    g=g.map((r,y)=>r.map(c=>c||picked[Math.min(bands-1,Math.floor(y/H0*bands))]));
+    BGCOLOR=picked; // every backdrop stripe draws flat
+  }
+  const rnd=rng(7000+n*131);
+  if(d.stones&&!noStones){ // scatter a few rocks: dead weight the ants must walk around
+    const H=g.length,W=g[0].length,blobs=3+Math.floor(rnd()*3);
+    for(let b=0;b<blobs;b++){
+      const cx=1+Math.floor(rnd()*(W-2)),cy=1+Math.floor(rnd()*(H-2)),r=1+rnd()*1.6*d.scale;
+      for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(Math.hypot(x-cx,y-cy)<=r&&x>0&&y>0&&x<W-1&&y<H-1)g[y][x]='Q';
+    }
+  }
+  let hp=null;
+  if(d.frozen){ // frosted pixels: one trip cracks them, a second one carries them off
+    hp=g.map(row=>row.map(c=>(c&&c!=='Q'&&rnd()<0.22)?2:1));
+  }
+  const names=[];if(d.stones&&!noStones)names.push('หิน');if(d.frozen)names.push('น้ำแข็ง');if(d.mystery)names.push('กล่องปริศนา');
+  return{name:base.name+comboName,g,hp,bg:d.bg?BGCOLOR:null,extras:names};
+}
+// ---------- state ----------
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),wrap=document.getElementById('wrap');
+let cw=0,ch=0,L={},S=null;
+let saved=0,maxLv=0;try{saved=parseInt(localStorage.getItem('antpix-level')||'0',10)||0;maxLv=Math.max(saved,parseInt(localStorage.getItem('antpix-max')||'0',10)||0)}catch(e){}
+let speed=1;
+
+function depthMap(g){
+  const h=g.length,w=g[0].length,d=Array.from({length:h},()=>Array(w).fill(1e9)),q=[];
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(g[y][x]){
+    const edge=[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>{const nx=x+dx,ny=y+dy;return nx<0||ny<0||nx>=w||ny>=h||!g[ny][nx]});
+    if(edge){d[y][x]=0;q.push([x,y])}}
+  for(let i=0;i<q.length;i++){const[x,y]=q[i];for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx>=0&&ny>=0&&nx<w&&ny<h&&g[ny][nx]&&d[ny][nx]>d[y][x]+1){d[ny][nx]=d[y][x]+1;q.push([nx,ny])}}}
+  return d;
+}
+
+// greedy playthrough: confirms a level can be won before it is shown
+function solvable(g0,cols0,nslots,hp0){
+  const g=g0.map(r=>r.slice()),h=g.length,w=g[0].length,PW=w+2,PH=h+2,cols=cols0.map(c=>c.map(b=>({c:b.c,left:b.total})));
+  const hp=hp0?hp0.map(r=>r.slice()):g.map(r=>r.map(()=>1));
+  let filled=0;const byColor={};
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const c=g[y][x];if(!c||c==='Q')continue;
+    filled+=hp[y][x];(byColor[c]=byColor[c]||[]).push([x,y])}
+  const walk=(x,y)=>x>=0&&y>=0&&x<PW&&y<PH&&(x===0||y===0||x===PW-1||y===PH-1||!g[y-1][x-1]);
+  const C=new Uint8Array(PW*PH),q=[];
+  for(let x=0;x<PW;x++)q.push([x,0],[x,PH-1]);
+  for(let y=1;y<PH-1;y++)q.push([0,y],[PW-1,y]);
+  q.forEach(([x,y])=>C[y*PW+x]=1);
+  for(let i=0;i<q.length;i++){const[x,y]=q[i];for(const[dx,dy]of N4){const nx=x+dx,ny=y+dy;if(walk(nx,ny)&&!C[ny*PW+nx]){C[ny*PW+nx]=1;q.push([nx,ny])}}}
+  const opened=(x,y)=>{ // a pixel just went away: flood only the pocket it opened up
+    const px=x+1,py=y+1;if(!N4.some(([dx,dy])=>C[(py+dy)*PW+px+dx]))return;
+    const st=[[px,py]];C[py*PW+px]=1;
+    while(st.length){const[cx,cy]=st.pop();
+      for(const[dx,dy]of N4){const nx=cx+dx,ny=cy+dy;if(walk(nx,ny)&&!C[ny*PW+nx]){C[ny*PW+nx]=1;st.push([nx,ny])}}}
+  };
+  const exposed=c=>{const L=byColor[c];if(!L)return null;
+    for(let i=0;i<L.length;i++){const[x,y]=L[i];if(g[y][x]!==c)continue;
+      if(N4.some(([dx,dy])=>C[(y+1+dy)*PW+x+1+dx]))return L[i]}
+    return null};
+  const slots=[];let guard=0;
+  while(filled>0&&guard++<200000){
+    while(slots.length<nslots){const i=cols.findIndex(col=>col.length&&exposed(col[0].c));if(i<0)break;slots.push(cols[i].shift())}
+    let prog=false;
+    for(const b of slots){const e=exposed(b.c);if(!e)continue;
+      const[x,y]=e;filled--;b.left--;prog=true;
+      if(--hp[y][x]<=0){g[y][x]=null;opened(x,y)}}
+    for(let i=slots.length-1;i>=0;i--)if(slots[i].left<=0)slots.splice(i,1);
+    if(!prog){const col=cols.find(c=>c.length);if(slots.length<nslots&&col){slots.push(col.shift());continue}return false}
+  }
+  return filled===0;
+}
+function buildBoxes(g,n,attempt,d,hp){
+  const h=g.length,w=g[0].length,r=rng(1000+n*97+attempt*7919),dm=depthMap(g),cnt={},dsum={};let filled=0;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const c=g[y][x];if(!c||c==='Q')continue;
+    const u=hp?hp[y][x]:1;cnt[c]=(cnt[c]||0)+u;dsum[c]=(dsum[c]||0)+dm[y][x]*u;filled+=u}
+  const spread=Math.max(0,d.spread-attempt*1.2),chunks=[];
+  for(const c in cnt){let left=cnt[c];const avg=dsum[c]/cnt[c];let part=0;
+    const mul=d.scale*d.scale;while(left>0){let s=Math.min(left,(d.chunkMin+Math.floor(r()*d.chunkSpan))*mul);if(left-s>0&&left-s<5)s=left;
+      chunks.push({c,total:s,key:avg+part*1.2+r()*spread});left-=s;part++}}
+  chunks.sort((a,b)=>a.key-b.key);
+  const cols=[[],[],[],[]];chunks.forEach((k,i)=>cols[i%4].push({c:k.c,total:k.total,delivered:0,out:0,t:1,cd:0,done:false,pop:0,
+    mystery:!!d.mystery&&(i%3===1),revealed:false}));
+  return{cols,filled};
+}
+function loadLevel(n,boot){
+  const d=cfg(n);let def=levelDef(n),built,attempt=0,nslots=d.slots,noStones=false,noCombo=false;
+  for(;;){
+    const g0=def.g;built=buildBoxes(g0,n,attempt,d,def.hp);
+    if(solvable(g0,built.cols,nslots,def.hp))break;
+    if(++attempt<10)continue;
+    attempt=0;
+    if(!noStones&&d.stones){noStones=true;def=levelDef(n,true,noCombo);continue} // rocks boxed something in — lay the level out without them
+    if(!noCombo&&d.combo){noCombo=true;noStones=false;def=levelDef(n,false,true);continue} // the pairing itself was the problem — use one picture
+    if(nslots<6){nslots++;continue}
+    break;
+  }
+  const g=def.g,h=g.length,w=g[0].length,{cols,filled}=built;
+  S={n,name:def.name,bg:def.bg,grid:g,hp:def.hp,extras:def.extras,gw:w,gh:h,filled,start:filled,cols,slots:Array(nslots).fill(null),preview:d.preview,maxAnt:d.maxAnt,antGap:d.antGap,ants:[],reserved:new Map(),state:'play',stuck:0,flash:0,time:0};
+  document.getElementById('lv').textContent=`ด่าน ${n+1} · ${nslots} ช่อง · ${def.name}`+(def.extras&&def.extras.length?' · '+def.extras.join('+'):'');
+  S.dirty=true;hideOv();layout();saved=n;if(!boot)clearState();
+  const tips={'หิน':'หินสีเทาเก็บไม่ได้ ต้องเดินอ้อม','น้ำแข็ง':'พิกเซลน้ำแข็งต้องเก็บสองครั้ง','กล่องปริศนา':'กล่อง ? จะเห็นสีก็ต่อเมื่อวางลงช่องแล้ว'};
+  (def.extras||[]).forEach(e=>{const key='antpix-tip-'+e;if(!lsGet(key)){lsSet(key,'1');setTimeout(()=>toast('ใหม่: '+tips[e]),400)}});
+}
+
+// ---------- layout ----------
+function layout(){
+  if(!S)return;
+  const pad=12,W=cw,H=ch;
+  const bh=Math.max(140,H*0.47),bw=W-pad*2;
+  const cell=Math.max(4,Math.floor(Math.min((bw-10)/(S.gw+2),(bh-10)/(S.gh+2))));
+  L.board={x:pad,y:8,w:bw,h:bh};L.cell=cell;
+  L.ox=pad+(bw-cell*S.gw)/2;L.oy=8+(bh-cell*S.gh)/2;
+  const NS=S.slots.length;const s=Math.min(60,(W-pad*2)/NS-12);L.s=s;
+  L.slotY=8+bh+18;const sg=(W-pad*2-s*NS)/NS;
+  L.slotX=i=>pad+sg/2+i*(s+sg);
+  L.hole={x:W/2,y:L.slotY-18};
+  L.qY=L.slotY+s+24;
+  let q=Math.min(62,(W-pad*2)/4-16);const avail=H-L.qY-6;q=Math.max(30,Math.min(q,avail/3-10));L.q=q;
+  const qg=(W-pad*2-q*4)/4;L.qX=i=>pad+qg/2+i*(q+qg);L.qRow=r=>L.qY+r*(q+10);
+}
+function resize(){const r=wrap.getBoundingClientRect();cw=r.width;ch=r.height;const d=window.devicePixelRatio||1;cv.width=Math.round(cw*d);cv.height=Math.round(ch*d);ctx.setTransform(d,0,0,d,0,0);layout()}
+window.addEventListener('resize',resize);
+
+// ---------- helpers ----------
+// padded grid: ring of walkable cells around the picture (the tray edge the ants march along)
+const cellC=(x,y)=>({x:L.ox+(x+.5)*L.cell,y:L.oy+(y+.5)*L.cell});
+const padC=p=>cellC(p[0]-1,p[1]-1);
+const slotAnchor=i=>({x:L.slotX(i)+L.s/2,y:L.slotY+L.s*.25});
+const N4=[[1,0],[-1,0],[0,1],[0,-1]];
+function walk(px,py){const PW=S.gw+2,PH=S.gh+2;if(px<0||py<0||px>=PW||py>=PH)return false;
+  if(px===0||py===0||px===PW-1||py===PH-1)return true;return !S.grid[py-1][px-1]}
+function refreshConn(){ // walkable cells connected to the outer ring
+  const PW=S.gw+2,PH=S.gh+2,c=new Uint8Array(PW*PH),q=[];
+  for(let x=0;x<PW;x++){q.push([x,0],[x,PH-1])}for(let y=1;y<PH-1;y++){q.push([0,y],[PW-1,y])}
+  q.forEach(([x,y])=>c[y*PW+x]=1);
+  for(let i=0;i<q.length;i++){const[x,y]=q[i];for(const[dx,dy]of N4){const nx=x+dx,ny=y+dy;if(walk(nx,ny)&&!c[ny*PW+nx]){c[ny*PW+nx]=1;q.push([nx,ny])}}}
+  S.conn=c;S.dirty=false}
+function reachable(x,y){if(S.dirty)refreshConn();const PW=S.gw+2;for(const[dx,dy]of N4){const px=x+1+dx,py=y+1+dy;if(S.conn[py*PW+px])return true}return false}
+function hasReachable(c){for(let y=0;y<S.gh;y++)for(let x=0;x<S.gw;x++)if(S.grid[y][x]===c&&reachable(x,y))return true;return false}
+function exitFor(i){const PW=S.gw+2,sx=slotAnchor(i).x;return[Math.max(0,Math.min(PW-1,Math.round((sx-L.ox)/L.cell-.5)+1)),S.gh+1]}
+function entryFor(){const PW=S.gw+2,hx=L.hole?L.hole.x:L.ox+S.gw*L.cell/2;return[Math.max(0,Math.min(PW-1,Math.round((hx-L.ox)/L.cell-.5)+1)),S.gh+1]}
+// Dijkstra over walkable cells: the rim and the edge of the remaining picture are cheap, open ground is not
+function routesFrom(e){
+  if(S.dirty)refreshConn();
+  const PW=S.gw+2,PH=S.gh+2,NC=PW*PH;
+  const dist=new Int32Array(NC).fill(-1),par=new Int32Array(NC).fill(-1);
+  const rim=(x,y)=>x===0||y===0||x===PW-1||y===PH-1;
+  const hugs=(x,y)=>{for(const[dx,dy]of N4){const nx=x+dx-1,ny=y+dy-1;
+      if(nx>=0&&ny>=0&&nx<S.gw&&ny<S.gh&&S.grid[ny][nx])return true}return false};
+  const cost=(x,y)=>rim(x,y)?1:(hugs(x,y)?2:10);
+  const s0=e[1]*PW+e[0],buckets=[[s0]];dist[s0]=0;
+  for(let d=0;d<buckets.length;d++){
+    const bk=buckets[d];if(!bk)continue;
+    for(let i=0;i<bk.length;i++){const id=bk[i];if(dist[id]!==d)continue;
+      const x=id%PW,y=(id-x)/PW;
+      for(const[dx,dy]of N4){const nx=x+dx,ny=y+dy;if(!walk(nx,ny))continue;
+        const nid=ny*PW+nx,nd=d+cost(nx,ny);
+        if(dist[nid]<0||nd<dist[nid]){dist[nid]=nd;par[nid]=id;(buckets[nd]=buckets[nd]||[]).push(nid)}}}
+  }
+  return{dist,par,PW};
+}
+const chain=(par,PW,id)=>{const p=[];for(let i=id;i>=0;i=par[i])p.push([i%PW,Math.floor(i/PW)]);return p};
+// how many ants are already heading for a pixel — keeps a crowd from chasing the same one
+const claims=(x,y)=>S.reserved.get(y*S.gw+x)||0;
+const claim=(x,y)=>S.reserved.set(y*S.gw+x,claims(x,y)+1);
+const unclaim=(x,y)=>{const k=y*S.gw+x,v=(S.reserved.get(k)||0)-1;v>0?S.reserved.set(k,v):S.reserved.delete(k)};
+// pick the nearest exposed pixel of colour c, walking out from `from`; limit = how many ants may share one pixel
+function planRoute(c,from,limit){
+  const{dist,par,PW}=routesFrom(from);
+  let best=null,bd=1e9,bn=-1;
+  for(let y=0;y<S.gh;y++)for(let x=0;x<S.gw;x++){if(S.grid[y][x]!==c||claims(x,y)>=limit)continue;
+    for(const[dx,dy]of N4){const nid=(y+1+dy)*PW+(x+1+dx),d=dist[nid];if(d>=0&&d<bd){bd=d;best=[x,y];bn=nid}}}
+  if(!best)return null;
+  const path=chain(par,PW,bn).reverse();
+  path.push([best[0]+1,best[1]+1]);
+  return{cell:best,path};
+}
+// one unclaimed pixel if there is one, otherwise share — but never more than two ants on the same pixel
+const findTarget=(c,from)=>planRoute(c,from,1)||planRoute(c,from,2);
+// homeward: leave the tray at the point closest to this ant's own box, not back where it came in
+function planHome(cell,i){
+  const{dist,par,PW}=routesFrom(exitFor(i)),id=(cell[1]+1)*PW+(cell[0]+1);
+  if(dist[id]<0)return null;
+  return chain(par,PW,id); // already ordered pixel → exit
+}
+
+
+// ---------- update ----------
+function update(dt){
+  if(!S||S.state!=='play')return;
+  dt*=speed;S.time+=dt;if(S.flash>0)S.flash-=dt;
+  S.slots.forEach((b,i)=>{
+    if(!b)return;
+    if(b.t<1)b.t=Math.min(1,b.t+dt*3.2);
+    if(b.done){b.pop+=dt*3.5;if(b.pop>=1)S.slots[i]=null;return}
+    b.cd-=dt;
+    if(b.t>=1&&b.cd<=0&&b.out<(S.maxAnt||3)&&b.total-b.delivered-b.out>0){
+      const plan=findTarget(b.c,entryFor());
+      if(plan){const cell=plan.cell;claim(cell[0],cell[1]);
+        S.ants.push({b,slot:i,x:L.hole.x+(Math.random()-.5)*14,y:L.hole.y+(Math.random()-.5)*8,cx:cell[0],cy:cell[1],path:plan.path,idx:0,phase:'go',ang:-Math.PI/2,wig:Math.random()*6});
+        b.out++;b.cd=S.antGap||0.3}
+    }
+  });
+  const sp=Math.max(180,L.cell*26);
+  for(const a of S.ants){
+    let step=sp*dt;a.wig+=dt*24;
+    while(step>0&&!a.dead){
+      const sa=slotAnchor(a.slot);
+    // walking home: along under the tray until level with its own box, then straight down into it — no diagonals
+    const t=a.idx<a.path.length?padC(a.path[a.idx])
+      :(a.phase==='back'&&a.leg===0?{x:sa.x,y:a.y}:sa);
+      const dx=t.x-a.x,dy=t.y-a.y,d=Math.hypot(dx,dy);
+      if(d>0.5)a.ang=Math.atan2(dy,dx);
+      if(d>step){a.x+=dx/d*step;a.y+=dy/d*step;step=0;break}
+      a.x=t.x;a.y=t.y;step-=d;
+      if(a.idx<a.path.length){a.idx++;
+        if(a.phase==='go'&&a.idx===a.path.length){ // bite the pixel if it is still there, then head home
+          unclaim(a.cx,a.cy);
+          if(S.grid[a.cy][a.cx]===a.b.c){
+            a.carry=a.b.c;S.filled--;
+            if(S.hp&&S.hp[a.cy][a.cx]>1)S.hp[a.cy][a.cx]--;      // frost cracks, the pixel stays
+            else{S.grid[a.cy][a.cx]=null;S.dirty=true}
+          }else{ // another ant got there first — walk on to the next pixel instead of trudging home empty
+            const re=findTarget(a.b.c,[a.cx+1,a.cy+1]);
+            if(re){claim(re.cell[0],re.cell[1]);a.cx=re.cell[0];a.cy=re.cell[1];a.path=re.path;a.idx=0;step=0;continue}
+          }
+          a.phase='back';a.leg=0;a.path=planHome([a.cx,a.cy],a.slot)||a.path.slice(0,-1).reverse();a.idx=0;step=0;
+        }
+      }else if(a.phase==='back'&&a.leg<1){a.leg++;
+      }else if(a.phase==='back'){if(a.carry)a.b.delivered++;a.b.out--;a.dead=true;if(a.b.delivered>=a.b.total){a.b.done=true;a.b.pop=0}}
+    }
+  }
+  S.ants=S.ants.filter(a=>!a.dead);
+  document.getElementById('prog').style.width=(100*(1-S.filled/S.start)).toFixed(1)+'%';
+  if(S.filled===0&&S.ants.length===0){S.state='win';maxLv=Math.max(maxLv,S.n+1);saved=S.n+1;clearState();try{localStorage.setItem('antpix-level',String(S.n+1));localStorage.setItem('antpix-max',String(maxLv))}catch(e){}
+    const done100=S.n+1===MAXLEVEL;setTimeout(()=>showOv(done100?'ครบ 100 ด่านแล้ว!':'เก่งมาก!',done100?'สุดยอด เล่นต่อได้ในรอบพิเศษที่ยากขึ้นอีก':`เก็บ${S.name}ครบทุกพิกเซลแล้ว`,'ด่านต่อไป',()=>loadLevel(S.n+1)),450);return}
+  // dead end: nothing in flight, nothing in the slots can be reached, and nothing the player could still
+  // place would help either — checked a few times a second rather than every frame
+  S.check=(S.check||0)-dt;
+  if(S.ants.length===0&&S.check<=0){
+    S.check=0.25;
+    const inPlay=S.slots.filter(b=>b&&!b.done);
+    const slotsBlocked=inPlay.every(b=>b.t>=1&&!hasReachable(b.c));
+    const free=S.slots.filter(b=>!b).length;
+    let canPlace=false;
+    if(free>0)for(const col of S.cols){for(let i=0;i<Math.min(free,col.length);i++)if(hasReachable(col[i].c)){canPlace=true;break}if(canPlace)break}
+    S.dead=slotsBlocked&&!canPlace;
+  }
+  if(S.ants.length===0&&S.dead){S.stuck+=dt;
+    if(S.stuck>0.7){S.state='lose';clearState();
+      const full=S.slots.every(b=>b&&!b.done);
+      showOv(full?'ช่องเต็มแล้ว':'ไปต่อไม่ได้แล้ว','มดเข้าไม่ถึงสีที่เหลืออยู่ ลองเก็บสีขอบนอกก่อน แล้วค่อยเปิดทางเข้าข้างใน','เล่นด่านนี้อีกครั้ง',()=>loadLevel(S.n))}}
+  else{S.stuck=0;if(S.ants.length)S.dead=false}
+}
+
+// ---------- draw ----------
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+function drawBox(x,y,s,c,num,lid){
+  const col=PAL[c],lip=Math.max(3,s*.1);
+  if(lid){ctx.fillStyle=shade(col,-.2);rr(x+s*.2,y-s*.12,s*.6,s*.25,s*.08);ctx.fill();ctx.fillStyle=shade(col,.15);rr(x+s*.27,y-s*.06,s*.46,s*.14,s*.05);ctx.fill()}
+  ctx.fillStyle=shade(col,-.28);rr(x,y+lip,s,s-lip,s*.2);ctx.fill();
+  ctx.fillStyle=col;rr(x,y,s,s-lip,s*.2);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.14)';rr(x+s*.1,y+s*.07,s*.8,s*.14,s*.07);ctx.fill();
+  ctx.font=`600 ${Math.round(s*.4)}px Mitr,system-ui,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+  const tx=x+s/2,ty=y+(s-lip)/2+1;
+  if(LIGHT[c]){ctx.fillStyle='#3b2418';ctx.fillText(num,tx,ty)}
+  else{ctx.lineWidth=Math.max(2,s*.07);ctx.strokeStyle='rgba(40,20,20,.75)';ctx.lineJoin='round';ctx.strokeText(num,tx,ty);ctx.fillStyle='#fff';ctx.fillText(num,tx,ty)}
+}
+function drawAnt(a){
+  const col=PAL[a.b.c],dark=shade(col,-.45),r=Math.max(2.4,L.cell*.24);
+  ctx.save();ctx.translate(a.x,a.y);ctx.rotate(a.ang);
+  ctx.strokeStyle=dark;ctx.lineWidth=Math.max(1,r*.35);ctx.lineCap='round';
+  for(let k=-1;k<=1;k++){const w=Math.sin(a.wig+k*2)*r*.6;
+    ctx.beginPath();ctx.moveTo(k*r*.9,0);ctx.lineTo(k*r*.9+w,-r*1.7);ctx.moveTo(k*r*.9,0);ctx.lineTo(k*r*.9-w,r*1.7);ctx.stroke()}
+  ctx.fillStyle=col;ctx.strokeStyle=dark;ctx.lineWidth=Math.max(1,r*.28);
+  [[-r*1.5,r*1.05],[0,r*.75],[r*1.35,r*.85]].forEach(([ox,rad])=>{ctx.beginPath();ctx.arc(ox,0,rad,0,7);ctx.fill();ctx.stroke()});
+  ctx.fillStyle='#222';ctx.beginPath();ctx.arc(r*1.7,-r*.35,r*.22,0,7);ctx.arc(r*1.7,r*.35,r*.22,0,7);ctx.fill();
+  ctx.restore();
+  if(a.carry){const s=L.cell*.8;ctx.fillStyle=shade(PAL[a.carry],-.25);ctx.fillRect(a.x-s/2,a.y-s-r*.6+1.5,s,s);ctx.fillStyle=PAL[a.carry];ctx.fillRect(a.x-s/2,a.y-s-r*.6,s,s-1.5)}
+}
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function draw(){
+  ctx.clearRect(0,0,cw,ch);if(!S)return;
+  const B=L.board,tray=css('--tray'),edge=css('--tray-edge');
+  ctx.fillStyle=edge;rr(B.x,B.y+5,B.w,B.h,18);ctx.fill();ctx.fillStyle=tray;rr(B.x,B.y,B.w,B.h,18);ctx.fill();
+  const c=L.cell,g=S.grid;
+  for(let y=0;y<S.gh;y++)for(let x=0;x<S.gw;x++){const k=g[y][x];if(!k)continue;
+    const px=L.ox+x*c,py=L.oy+y*c,col=PAL[k],back=!!S.bg&&S.bg.indexOf(k)>=0;
+    if(!col)continue; // never let one unknown colour freeze the whole frame
+    if(k==='Q'){ // rock: no box ever collects these
+      ctx.fillStyle=shade(col,-.45);ctx.fillRect(px+.5,py+.5,c-1,c-1);
+      ctx.fillStyle=col;ctx.fillRect(px+.5,py+.5,c-1,c-Math.max(1.5,c*.25));
+      if(c>9){ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(px+c*.2,py+c*.5,c*.45,c*.18)}
+      continue}
+    if(back){ // backdrop pixels: same colour as their box, drawn flatter so the picture still reads on top
+      ctx.fillStyle=shade(col,-.3);ctx.fillRect(px+1,py+1,c-2,c-2);
+      ctx.fillStyle=col;ctx.fillRect(px+1,py+1,c-2,c-Math.max(2,c*.26));
+    }else{
+      ctx.fillStyle=shade(col,-.3);ctx.fillRect(px+.5,py+.5,c-1,c-1);
+      ctx.fillStyle=col;ctx.fillRect(px+.5,py+.5,c-1,c-Math.max(1.5,c*.2));
+      if(c>9){ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillRect(px+c*.18,py+c*.14,c*.3,c*.14)}}
+  }
+  if(L.hole){const hx=L.hole.x,hy=L.hole.y;ctx.fillStyle=edge;ctx.beginPath();ctx.ellipse(hx,hy,15,9,0,0,7);ctx.fill();
+    ctx.fillStyle=shade(css('--tray-edge')||'#000',-.45);ctx.beginPath();ctx.ellipse(hx,hy,12,7,0,0,7);ctx.fill()}
+  for(let i=0;i<S.slots.length;i++){const x=L.slotX(i),y=L.slotY,s=L.s;
+    ctx.fillStyle=S.flash>0?'rgba(255,80,80,.55)':'rgba(255,255,255,.55)';rr(x-4,y+s*.35,s+8,s*.75,12);ctx.fill()}
+  S.slots.forEach((b,i)=>{if(!b)return;const tx=L.slotX(i),ty=L.slotY;const e=1-Math.pow(1-b.t,3);
+    const x=b.fx+(tx-b.fx)*e,y=b.fy+(ty-b.fy)*e;
+    ctx.save();if(b.done){const sc=1+b.pop*.35;ctx.globalAlpha=Math.max(0,1-b.pop);ctx.translate(x+L.s/2,y+L.s/2);ctx.scale(sc,sc);ctx.translate(-x-L.s/2,-y-L.s/2)}
+    drawBox(x,y,L.s,b.c,Math.max(0,b.total-b.delivered),true);ctx.restore()});
+  S.cols.forEach((col,ci)=>{for(let r=Math.min((S.preview||3)-1,col.length-1);r>=0;r--){const b=col[r];ctx.save();if(r>0)ctx.globalAlpha=.5;
+    drawBox(L.qX(ci),L.qRow(r),L.q,(b.mystery&&!b.revealed)?'Q':b.c,(b.mystery&&!b.revealed)?'?':b.total,false);ctx.restore()}});
+  S.ants.forEach(drawAnt);
+}
+
+// ---------- input ----------
+cv.addEventListener('pointerdown',e=>{
+  if(!S||S.state!=='play')return;const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  for(let ci=0;ci<4;ci++){const bx=L.qX(ci),by=L.qRow(0);
+    if(S.cols[ci].length&&x>=bx-4&&x<=bx+L.q+4&&y>=by-4&&y<=by+L.q+4){
+      const i=S.slots.indexOf(null);if(i<0){S.flash=.35;return}
+      const b=S.cols[ci].shift();b.revealed=true;b.fx=bx+(L.q-L.s)/2;b.fy=by;b.t=0;b.cd=0;S.slots[i]=b;return}}
+});
+document.getElementById('spd').onclick=e=>{speed=speed===1?2:1;e.currentTarget.classList.toggle('on',speed===2);e.currentTarget.setAttribute('aria-pressed',speed===2)};
+document.getElementById('rst').onclick=()=>loadLevel(S?S.n:saved);
+
+// ---------- overlay ----------
+const ov=document.getElementById('ov');
+function showOv(t,p,btn,fn){document.getElementById('ovX').innerHTML='';document.getElementById('ovT').textContent=t;document.getElementById('ovP').textContent=p;const b=document.getElementById('ovB');b.textContent=btn;b.onclick=fn;ov.classList.add('show');b.focus()}
+function hideOv(){ov.classList.remove('show')}
+function showMenu(){
+  if(!S)return;const prev=S.state;if(prev==='play')S.state='pause';
+  const total=Math.max(MAXLEVEL,maxLv+1);
+  showOv('เลือกด่าน',`เล่นถึงด่าน ${maxLv+1} แล้ว พิมพ์เลขด่านเพื่อไปที่ด่านนั้นได้`,'เล่นต่อ',()=>{hideOv();if(S.state==='pause')S.state='play'});
+  const X=document.getElementById('ovX');
+  const jump=document.createElement('div');jump.className='jump';
+  const inp=document.createElement('input');inp.type='number';inp.min=1;inp.inputMode='numeric';inp.placeholder='เลขด่าน';inp.value=S.n+1;
+  const go=document.createElement('button');go.className='lvb';go.textContent='ไปด่านนี้';
+  go.onclick=()=>{const v=Math.max(1,Math.round(+inp.value||1))-1;maxLv=Math.max(maxLv,v);
+    lsSet('antpix-max',String(maxLv));lsSet('antpix-level',String(v));stamp();pushCloud();loadLevel(v)};
+  jump.appendChild(inp);jump.appendChild(go);X.appendChild(jump);
+  const g=document.createElement('div');g.className='grid';
+  for(let i=0;i<total;i++){const b=document.createElement('button');b.className='lvb'+(i===S.n?' cur':'');b.textContent=i+1;
+    b.title=LEVELS[i%LEVELS.length].name;b.disabled=i>maxLv;b.onclick=()=>loadLevel(i);g.appendChild(b)}
+  X.appendChild(g);
+}
+document.getElementById('menu').onclick=showMenu;
+
+
+// ---------- resume mid-level + cloud save ----------
+const SAVE_KEY='antpix-state',STAMP_KEY='antpix-updated';
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+function stateString(){
+  if(!S||S.state==='win'||S.state==='lose'||S.state==='intro')return null;
+  // settle ants in flight: carried pixels count as delivered, walking ants just go home
+  const extra=new Map();S.ants.forEach(a=>{if(a.phase==='back')extra.set(a.b,(extra.get(a.b)||0)+1)});
+  const slots=S.slots.map(b=>{if(!b||b.done)return null;const d=b.delivered+(extra.get(b)||0);return d>=b.total?null:{c:b.c,total:b.total,delivered:d}});
+  return JSON.stringify({v:2,n:S.n,filled:S.filled,start:S.start,
+    grid:S.grid.map(r=>r.map(c=>c||'.').join('')),
+    hp:S.hp?S.hp.map(r=>r.join('')):null,
+    cols:S.cols.map(col=>col.map(b=>[b.c,b.total,b.mystery?(b.revealed?2:1):0])),slots});
+}
+function stamp(){lsSet(STAMP_KEY,String(Date.now()))}
+function saveState(){const st=stateString();if(st===null||st===lsGet(SAVE_KEY))return;lsSet(SAVE_KEY,st);stamp();pushCloud()}
+function clearState(){lsSet(SAVE_KEY,null);lsSet('antpix-level',String(saved));lsSet('antpix-max',String(maxLv));stamp();pushCloud()}
+function restoreState(){
+  let d=null;try{d=JSON.parse(lsGet(SAVE_KEY)||'null')}catch(e){}
+  if(!d||(d.v!==1&&d.v!==2)||!Array.isArray(d.grid)||d.filled<=0)return false;
+  const def=levelDef(d.n);
+  const mkBox=(c,total,delivered)=>({c,total,delivered,out:0,t:1,cd:0,done:false,pop:0,fx:0,fy:0});
+  const grid=d.grid.map(r=>r.split('').map(c=>c==='.'?null:c));
+  // a save written by an older palette may name a colour this build no longer has — start the level fresh
+  for(const row of grid)for(const c of row)if(c&&!PAL[c])return false;
+  const hp=d.hp?d.hp.map(r=>r.split('').map(Number)):null;
+  let filled=0;for(let y=0;y<grid.length;y++)for(let x=0;x<grid[0].length;x++){const c=grid[y][x];if(c&&c!=='Q')filled+=hp?hp[y][x]:1}
+  saved=d.n;
+  S={n:d.n,name:def.name,bg:def.bg,grid,hp,extras:def.extras,gw:grid[0].length,gh:grid.length,filled,start:d.start,
+    cols:d.cols.map(col=>col.map(([c,t,m])=>{const b=mkBox(c,t,0);if(m){b.mystery=true;b.revealed=m===2}return b})),
+    slots:d.slots.map(b=>b?mkBox(b.c,b.total,b.delivered):null),preview:cfg(d.n).preview,maxAnt:cfg(d.n).maxAnt,antGap:cfg(d.n).antGap,
+    ants:[],reserved:new Map(),state:'play',stuck:0,flash:0,time:0,dirty:true};
+  document.getElementById('lv').textContent=`ด่าน ${d.n+1} · ${d.slots.length} ช่อง · ${def.name}`+(def.extras&&def.extras.length?' · '+def.extras.join('+'):'');
+  hideOv();layout();S.slots.forEach((b,i)=>{if(b){b.fx=L.slotX(i);b.fy=L.slotY}});
+  return true;
+}
+
+// Cloud copy in this viewer's private space on their Claude account (absent in the downloaded file → local only)
+let cloud=null,lastCloud='',cloudBusy=false,cloudAgain=false;
+function cloudBody(){return{level:saved,max:maxLv,state:lsGet(SAVE_KEY)||'',updatedAt:Number(lsGet(STAMP_KEY)||0)}}
+const cloudKey=b=>JSON.stringify([b.level,b.max,b.state]);
+function pushCloud(){
+  if(!cloud)return;const body=cloudBody(),key=cloudKey(body);if(key===lastCloud)return;
+  if(cloudBusy){cloudAgain=true;return}
+  cloudBusy=true;
+  cloud.set(body).then(()=>{lastCloud=key}).catch(()=>{}).finally(()=>{cloudBusy=false;if(cloudAgain){cloudAgain=false;pushCloud()}});
+}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('show'),2200)}
+async function initCloud(){
+  try{
+    if(!window.claude||typeof window.claude.use!=='function')return;
+    const[db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
+    if(!db||!user)return;
+    const uid=await user.id();if(!uid)return;
+    const ref=db.doc('data/users/'+uid+'/save'),snap=await ref.get();
+    cloud=ref;
+    if(snap.exists){
+      const c=snap.data()||{},localT=Number(lsGet(STAMP_KEY)||0);
+      maxLv=Math.max(maxLv,Number(c.max)||0);lsSet('antpix-max',String(maxLv));
+      if((Number(c.updatedAt)||0)>localT){
+        saved=Number(c.level)||0;lsSet('antpix-level',String(saved));
+        lsSet(SAVE_KEY,c.state||null);lsSet(STAMP_KEY,String(c.updatedAt));lastCloud=cloudKey({level:saved,max:c.max,state:c.state||''});
+        if(!restoreState())loadLevel(saved,true);
+        toast('☁️ โหลดเซฟจากบัญชีแล้ว');return;
+      }
+    }
+    pushCloud();
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveState()});
+window.addEventListener('pagehide',saveState);
+setInterval(saveState,2000);
+let last=performance.now();
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();requestAnimationFrame(loop)}
+resize();
+const resumed=restoreState();
+if(!resumed)loadLevel(saved,true);
+if(!resumed&&saved===0){S.state='intro';showOv('มดเก็บพิกเซล','แตะกล่องแถวบนเพื่อส่งมดไปเก็บพิกเซลสีเดียวกัน มดเดินเลาะขอบถาดเข้าไปกินได้แค่พิกเซลที่มีทางเข้าถึง มี 5 ช่อง ถ้าเต็มแล้วไม่มีมดตัวไหนไปต่อได้ถือว่าแพ้','เริ่มเล่น',()=>{S.state='play';hideOv()})}
+requestAnimationFrame(loop);
+initCloud();
+})();
+</script>
+</body>
+</html>
