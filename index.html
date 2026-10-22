@@ -1011,6 +1011,23 @@ document.getElementById('rst').onclick=()=>loadLevel(S?S.n:saved);
 const ov=document.getElementById('ov');
 function showOv(t,p,btn,fn){document.getElementById('ovX').innerHTML='';document.getElementById('ovT').textContent=t;document.getElementById('ovP').textContent=p;const b=document.getElementById('ovB');b.textContent=btn;b.onclick=fn;ov.classList.add('show');b.focus()}
 function hideOv(){ov.classList.remove('show')}
+// A save as one pasteable string: the same base64url payload the #save= link carries.
+const b64=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const unb64=s=>decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
+function saveCode(){saveState();
+  return b64(JSON.stringify({level:saved,max:maxLv,state:lsGet(SAVE_KEY)||''}))}
+function applyCode(txt){
+  try{
+    const m=String(txt||'').trim().match(/[A-Za-z0-9_\-]{16,}$/);if(!m)return false;
+    const j=JSON.parse(unb64(m[0]));
+    if(typeof j.level!=='number')return false;
+    saved=j.level;maxLv=Math.max(j.max||0,j.level);
+    lsSet('antpix-level',String(saved));lsSet('antpix-max',String(maxLv));
+    lsSet(SAVE_KEY,j.state||null);stamp();pushCloud();
+    if(!restoreState())loadLevel(saved,true);
+    return true;
+  }catch(e){return false}
+}
 function showMenu(){
   if(!S)return;const prev=S.state;if(prev==='play')S.state='pause';
   const total=Math.max(MAXLEVEL,maxLv+1);
@@ -1022,6 +1039,19 @@ function showMenu(){
   go.onclick=()=>{const v=Math.max(1,Math.round(+inp.value||1))-1;maxLv=Math.max(maxLv,v);
     lsSet('antpix-max',String(maxLv));lsSet('antpix-level',String(v));stamp();pushCloud();loadLevel(v)};
   jump.appendChild(inp);jump.appendChild(go);X.appendChild(jump);
+  // Moving a save between browsers. iOS keeps a home-screen app's storage apart from Safari's,
+  // so a save has to be carried across by hand as a code.
+  const mv=document.createElement('div');mv.className='jump';
+  const code=document.createElement('input');code.type='text';code.placeholder='วางรหัสเซฟที่นี่';
+  code.autocapitalize='off';code.autocorrect='off';code.spellcheck=false;
+  const cp=document.createElement('button');cp.className='lvb';cp.textContent='คัดลอกเซฟ';
+  cp.onclick=()=>{const t=saveCode();code.value=t;code.select();
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject())
+      .then(()=>toast('คัดลอกรหัสเซฟแล้ว'))
+      .catch(()=>toast('กดค้างที่ช่องแล้วเลือกคัดลอก'))};
+  const ps=document.createElement('button');ps.className='lvb';ps.textContent='วาง';
+  ps.onclick=()=>{if(applyCode(code.value)){toast('กู้เซฟแล้ว');code.value=''}else toast('รหัสไม่ถูกต้อง')};
+  mv.appendChild(code);mv.appendChild(ps);mv.appendChild(cp);X.appendChild(mv);
   const g=document.createElement('div');g.className='grid';
   for(let i=0;i<total;i++){const b=document.createElement('button');b.className='lvb'+(i===S.n?' cur':'');b.textContent=i+1;
     b.title=LEVELS[i%LEVELS.length].name;b.disabled=i>maxLv;b.onclick=()=>loadLevel(i);g.appendChild(b)}
