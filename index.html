@@ -104,16 +104,19 @@ const farApart=(a,b)=>{const p=rgbOf(a),q=rgbOf(b);return Math.hypot((p[0]-q[0])
 function cfg(n){
   const k=Math.min(n,119);
   const combo=false; // off: one tray, one picture
+  const scene=n>=49&&n%5===4; // every fifth level from 50 on is a full-tray scene instead of one object
   return{
-    combo,
-    scale: n<MAXLEVEL?1:(combo?1:2), // a two-picture tray is already wide, so it stays at the coarser size
+    combo, scene,
+    // a scene already covers the whole tray, so it stays at the coarser pixel size
+    scale: (n<MAXLEVEL||scene)?1:2,
     maxAnt: n<MAXLEVEL?12:22,   // how many of one box's ants can be out at once
     antGap: n<MAXLEVEL?0.3:0.22, // a new ant leaves the nest this often, so the trail never stops
     bg: k>=40,
     stones: n>=120&&n%3!==0,   // rocks the ants can never carry — they just block the way
     frozen: false,             // off: a two-trip pixel needs a marking, and markings make the picture noisy
     mystery: n>=180&&n%5<2,    // boxes that hide their colour until you place them
-    shades: n<30?0 : n<80?1 : n<140?2 : n<220?3 : 4, // how many shapes get a lit side and a shadow side
+    // a scene already carries plenty of colours, so it gets no extra shading
+    shades: scene?0 : n<30?0 : n<80?1 : n<140?2 : n<220?3 : 4,
     bands: n<60?1 : n<160?2 : 3,                      // the backdrop is this many colours, in stripes
     slots: k<5?6 : k<30?5 : k<60?4 : 3,
     preview: k<10?3 : k<35?2 : 1,
@@ -608,6 +611,84 @@ const LEVELS=[
     A.px(2,7,'G');A.px(21,7,'G');A.outline('K');})},
 ];
 
+// Full-tray scenes: the picture IS the whole board, so the ants eat inward from the rim.
+// Only base colours here — the lowercase ones are hue-shifted shadows the shading pass adds later.
+const SCENES=[
+  {name:'สายรุ้ง',make:()=>mk(34,28,A=>{
+    A.fill(()=>'C');
+    A.dots(26,201,c=>c==='C',['B']);
+    const bands=['R','O','Y','G','B','V'];
+    A.fill((x,y)=>{const d=Math.hypot(x-33,y-27);
+      for(let i=0;i<6;i++){const o=30-i*3.4;if(d<=o&&d>o-3.4)return bands[i]}});
+    A.ell(11,13,7.5,4.5,'W');A.ell(7,15,4.5,3.5,'W');A.ell(15,15,5,3.5,'W');
+    A.fill((x,y,c)=>c==='W'&&y>16.5?'L':undefined);
+    A.rect(8,12,2,2,'K');A.rect(13,12,2,2,'K');A.rect(10,15,3,1,'K');
+    A.circ(6,16,1.4,'P');A.circ(17,16,1.4,'P');})},
+  {name:'ตะวันลับฟ้า',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<9?'V':y<13?'M':y<16?'O':'Y');
+    A.circ(17,16,5.5,'R');
+    A.fill((x,y)=> y>=17?((Math.floor(y)%3===0)?'D':'B'):undefined);
+    A.fill((x,y,c)=>c==='B'&&Math.abs(x-17)<4&&y<22?'O':undefined);
+    [[5,11],[9,10],[26,12],[29,11]].forEach(([x,y])=>A.ell(x,y,3,1.2,'S'));})},
+  {name:'ฟ้ากลางคืน',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<11?'V':'B');
+    A.dots(34,211,c=>c==='V'||c==='B',['W','Y']);
+    A.circ(24,8,5,'T');A.circ(21,6,4.2,'V');
+    A.fill((x,y)=> y>=20?'K':undefined);
+    for(const[px,h]of[[4,7],[11,10],[20,8],[28,9]])
+      A.poly([[px-4,28],[px+4,28],[px,20-h]],'K');})},
+  {name:'ภูเขาหิมะ',make:()=>mk(34,28,A=>{
+    A.fill(()=>'C');A.circ(28,5,3,'Y');
+    A.poly([[2,22],[11,7],[20,22]],'S');A.poly([[11,7],[7.5,13],[14.5,13]],'W');
+    A.poly([[15,22],[24,10],[33,22]],'Q');A.poly([[24,10],[21,15],[27,15]],'W');
+    A.fill((x,y)=> y>=21?((Math.floor(y)%4===0)?'D':'G'):undefined);
+    A.ell(9,24,5,1.6,'D');})},
+  {name:'ชายหาด',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<10?'C':y<17?'B':'T');
+    A.circ(5,4,3,'Y');
+    A.fill((x,y,c)=>c==='B'&&Math.floor(y)%3===0?'D':undefined);
+    A.fill((x,y,c)=>c==='T'&&(Math.floor(x)*3+Math.floor(y)*5)%9===0?'N':undefined);
+    A.ell(22,19,7,2.6,'R');A.fill((x,y,c)=>c==='R'&&Math.floor(x)%4<2?'W':undefined);
+    A.rect(22,19,1,6,'N');
+    A.ell(9,24,3,1.6,'G');A.circ(9,21,2.2,'M');})},
+  {name:'ป่าไม้',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<18?'C':'G');
+    A.fill((x,y)=> y>=18&&(Math.floor(x)+Math.floor(y))%5===0?'D':undefined);
+    for(const[px,sc] of [[6,1],[16,1.25],[27,1]]){
+      A.poly([[px-6*sc,19],[px+6*sc,19],[px,8]],'D');
+      A.poly([[px-5*sc,14],[px+5*sc,14],[px,4]],'G');
+      A.rect(Math.round(px-1),19,2,4,'N');}
+    A.circ(30,5,2.6,'Y');})},
+  {name:'เมืองยามค่ำ',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<16?'V':'K');
+    A.dots(22,221,c=>c==='V',['W']);A.circ(6,5,3,'W');
+    for(const[x0,h,w] of [[2,12,6],[9,9,5],[15,14,6],[22,7,5],[28,11,6]]){
+      A.rect(x0,16-h,w,h,'S');
+      for(let y=16-h+1;y<15;y+=2)for(let x=x0+1;x<x0+w-1;x+=2)A.px(x,y,(x+y)%3?'Y':'T');}
+    A.fill((x,y)=> y>=22?'Q':undefined);})},
+  {name:'ทุ่งดอกไม้',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<11?'C':'G');
+    A.circ(27,5,3.4,'Y');A.ell(7,5,5,2,'W');A.ell(15,4,4,1.6,'W');
+    A.fill((x,y,c)=>c==='G'&&Math.floor(y)%4===0?'D':undefined);
+    const r=rng(231);
+    for(let i=0;i<13;i++){const x=2+Math.floor(r()*30),y=13+Math.floor(r()*13);
+      const col=['R','M','P','V','W'][i%5];
+      A.px(x-1,y,col);A.px(x+1,y,col);A.px(x,y-1,col);A.px(x,y+1,col);A.px(x,y,'Y');}})},
+  {name:'ใต้ทะเล',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<6?'C':y<20?'B':'T');
+    A.fill((x,y,c)=>c==='B'&&(Math.floor(x)*5+Math.floor(y)*3)%11===0?'D':undefined);
+    A.ell(11,12,5,3,'O');A.poly([[16,12],[21,9],[21,15]],'O');A.px(8,11,'K');
+    A.ell(25,17,3.4,2,'Y');A.poly([[28,17],[31,15],[31,19]],'Y');A.px(23,16,'K');
+    for(const x of [4,9,29])for(let y=20;y>13;y--)A.px(x+((y%4<2)?0:1),y,'G');
+    A.fill((x,y,c)=>c==='T'&&(Math.floor(x)+Math.floor(y))%5===0?'N':undefined);})},
+  {name:'อวกาศ',make:()=>mk(34,28,A=>{
+    A.fill(()=>'K');A.dots(40,241,c=>c==='K',['W','C','Y']);
+    A.circ(22,11,6.5,'O');A.fill((x,y,c)=>c==='O'&&(Math.floor(x)+Math.floor(y)*2)%7<2?'N':undefined);
+    A.fill((x,y)=>{const u=(x-22)*0.95+(y-11)*0.45;return Math.abs(u)<1.6&&Math.hypot((x-22)/11,(y-11)/5)<=1?'T':undefined});
+    A.circ(7,21,3.2,'S');A.circ(6,20,1.2,'Q');A.circ(9,22.5,1,'Q');
+    A.ell(6,5,2.6,1.4,'R');})},
+];
+
 const MAXLEVEL=100;
 const rot90=g=>{const H=g.length,W=g[0].length,o=[];
   for(let x=0;x<W;x++){const row=[];for(let y=H-1;y>=0;y--)row.push(g[y][x]);o.push(row)}return o};
@@ -623,7 +704,9 @@ function joinSide(a,b){
   return o;
 }
 function levelDef(n,noStones,noCombo){
-  const d=cfg(n),base=LEVELS[n%LEVELS.length],v=Math.floor(n/LEVELS.length);
+  const d=cfg(n);
+  const set=d.scene?SCENES:LEVELS, idx=d.scene?Math.floor(n/5)%SCENES.length:n%LEVELS.length;
+  const base=set[idx], v=Math.floor(n/set.length);
   MKSCALE=d.scale;BGCOLOR=null;let g=base.make();MKSCALE=1;
   let comboName='';
   if(d.combo&&!noCombo){ // pair it with a different picture so the whole tray is a board never seen before
@@ -650,7 +733,7 @@ function levelDef(n,noStones,noCombo){
         for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)
           if(g[y][x]===c&&(x-x0)/w+(y-y0)/h>1.08)g[y][x]=sh});
   }
-  if(d.bg){ // like the arcade version: the whole tray is covered, so the picture sits in a field of backdrop pixels
+  if(d.bg&&!d.scene){ // like the arcade version: the whole tray is covered, so the picture sits in a field of backdrop pixels
     const used=[];g.forEach(r=>r.forEach(c=>{if(c&&used.indexOf(c)<0)used.push(c)}));
     const far=farApart;
     const pool=['C','L','B','V','S','T','G','P','W','D','M','N','b','v','g','p','c','t','s','m','w','y','o','n'];
@@ -758,7 +841,8 @@ function buildBoxes(g,n,attempt,d,hp){
     const u=hp?hp[y][x]:1;cnt[c]=(cnt[c]||0)+u;dsum[c]=(dsum[c]||0)+dm[y][x]*u;filled+=u}
   const spread=Math.max(0,d.spread-attempt*1.2),chunks=[];
   for(const c in cnt){let left=cnt[c];const avg=dsum[c]/cnt[c];let part=0;
-    const mul=d.scale*d.scale;while(left>0){let s=Math.min(left,(d.chunkMin+Math.floor(r()*d.chunkSpan))*mul);if(left-s>0&&left-s<5)s=left;
+    const mul=d.scale*d.scale*(d.scene?2.2:1); // scenes are one big field, so they come in bigger boxes
+    while(left>0){let s=Math.min(left,Math.round((d.chunkMin+Math.floor(r()*d.chunkSpan))*mul));if(left-s>0&&left-s<5)s=left;
       chunks.push({c,total:s,key:avg+part*1.2+r()*spread});left-=s;part++}}
   chunks.sort((a,b)=>a.key-b.key);
   const cols=[[],[],[],[]];chunks.forEach((k,i)=>cols[i%4].push({c:k.c,total:k.total,delivered:0,out:0,t:1,cd:0,done:false,pop:0,
