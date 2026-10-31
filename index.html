@@ -873,14 +873,16 @@ function loadLevel(n,boot){
 function layout(){
   if(!S)return;
   const pad=12,W=cw,H=ch;
+  const HOLE=22;                     // strip above the tray that holds the nest hole
+  const top=8+HOLE;
   const bh=Math.max(140,H*0.47),bw=W-pad*2;
   const cell=Math.max(4,Math.floor(Math.min((bw-10)/(S.gw+2),(bh-10)/(S.gh+2))));
-  L.board={x:pad,y:8,w:bw,h:bh};L.cell=cell;
-  L.ox=pad+(bw-cell*S.gw)/2;L.oy=8+(bh-cell*S.gh)/2;
+  L.board={x:pad,y:top,w:bw,h:bh};L.cell=cell;
+  L.ox=pad+(bw-cell*S.gw)/2;L.oy=top+(bh-cell*S.gh)/2;
   const NS=S.slots.length;const s=Math.min(60,(W-pad*2)/NS-12);L.s=s;
-  L.slotY=8+bh+18;const sg=(W-pad*2-s*NS)/NS;
+  L.slotY=top+bh+18;const sg=(W-pad*2-s*NS)/NS;
   L.slotX=i=>pad+sg/2+i*(s+sg);
-  L.hole={x:W/2,y:L.slotY-18};
+  L.hole={x:W/2,y:8+HOLE/2};
   L.qY=L.slotY+s+24;
   let q=Math.min(62,(W-pad*2)/4-16);const avail=H-L.qY-6;q=Math.max(30,Math.min(q,avail/3-10));L.q=q;
   const qg=(W-pad*2-q*4)/4;L.qX=i=>pad+qg/2+i*(q+qg);L.qRow=r=>L.qY+r*(q+10);
@@ -905,7 +907,8 @@ function refreshConn(){ // walkable cells connected to the outer ring
 function reachable(x,y){if(S.dirty)refreshConn();const PW=S.gw+2;for(const[dx,dy]of N4){const px=x+1+dx,py=y+1+dy;if(S.conn[py*PW+px])return true}return false}
 function hasReachable(c){for(let y=0;y<S.gh;y++)for(let x=0;x<S.gw;x++)if(S.grid[y][x]===c&&reachable(x,y))return true;return false}
 function exitFor(i){const PW=S.gw+2,sx=slotAnchor(i).x;return[Math.max(0,Math.min(PW-1,Math.round((sx-L.ox)/L.cell-.5)+1)),S.gh+1]}
-function entryFor(){const PW=S.gw+2,hx=L.hole?L.hole.x:L.ox+S.gw*L.cell/2;return[Math.max(0,Math.min(PW-1,Math.round((hx-L.ox)/L.cell-.5)+1)),S.gh+1]}
+// the nest hole sits above the tray, so ants carrying a pixel leave by the top edge
+function entryFor(){const PW=S.gw+2,hx=L.hole?L.hole.x:L.ox+S.gw*L.cell/2;return[Math.max(0,Math.min(PW-1,Math.round((hx-L.ox)/L.cell-.5)+1)),0]}
 // Dijkstra over walkable cells: the rim and the edge of the remaining picture are cheap, open ground is not
 function routesFrom(e){
   if(S.dirty)refreshConn();
