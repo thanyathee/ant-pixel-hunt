@@ -944,11 +944,11 @@ function planRoute(c,from,limit){
 }
 // one unclaimed pixel if there is one, otherwise share — but never more than two ants on the same pixel
 const findTarget=(c,from)=>planRoute(c,from,1)||planRoute(c,from,2);
-// homeward: leave the tray at the point closest to this ant's own box, not back where it came in
-function planHome(cell,i){
-  const{dist,par,PW}=routesFrom(exitFor(i)),id=(cell[1]+1)*PW+(cell[0]+1);
+// homeward: carry the pixel back down to the nest hole in the middle
+function planHome(cell){
+  const{dist,par,PW}=routesFrom(entryFor()),id=(cell[1]+1)*PW+(cell[0]+1);
   if(dist[id]<0)return null;
-  return chain(par,PW,id); // already ordered pixel → exit
+  return chain(par,PW,id); // already ordered pixel → hole
 }
 
 
@@ -962,9 +962,10 @@ function update(dt){
     if(b.done){b.pop+=dt*3.5;if(b.pop>=1)S.slots[i]=null;return}
     b.cd-=dt;
     if(b.t>=1&&b.cd<=0&&b.out<(S.maxAnt||3)&&b.total-b.delivered-b.out>0){
-      const plan=findTarget(b.c,entryFor());
-      if(plan){const cell=plan.cell;claim(cell[0],cell[1]);
-        S.ants.push({b,slot:i,x:L.hole.x+(Math.random()-.5)*14,y:L.hole.y+(Math.random()-.5)*8,cx:cell[0],cy:cell[1],path:plan.path,idx:0,phase:'go',ang:-Math.PI/2,wig:Math.random()*6});
+      // out of its own box, straight up into the tray above it
+      const plan=findTarget(b.c,exitFor(i));
+      if(plan){const cell=plan.cell,sa=slotAnchor(i);claim(cell[0],cell[1]);
+        S.ants.push({b,slot:i,x:sa.x+(Math.random()-.5)*L.s*.5,y:sa.y,cx:cell[0],cy:cell[1],path:plan.path,idx:0,phase:'go',ang:-Math.PI/2,wig:Math.random()*6});
         b.out++;b.cd=S.antGap||0.3}
     }
   });
@@ -972,10 +973,9 @@ function update(dt){
   for(const a of S.ants){
     let step=sp*dt;a.wig+=dt*24;
     while(step>0&&!a.dead){
-      const sa=slotAnchor(a.slot);
-    // walking home: along under the tray until level with its own box, then straight down into it — no diagonals
-    const t=a.idx<a.path.length?padC(a.path[a.idx])
-      :(a.phase==='back'&&a.leg===0?{x:sa.x,y:a.y}:sa);
+      // out of the box and up into the tray, then back down the nest hole with the pixel
+      const t=a.idx<a.path.length?padC(a.path[a.idx])
+        :(a.phase==='back'?L.hole:slotAnchor(a.slot));
       const dx=t.x-a.x,dy=t.y-a.y,d=Math.hypot(dx,dy);
       if(d>0.5)a.ang=Math.atan2(dy,dx);
       if(d>step){a.x+=dx/d*step;a.y+=dy/d*step;step=0;break}
@@ -991,10 +991,10 @@ function update(dt){
             const re=findTarget(a.b.c,[a.cx+1,a.cy+1]);
             if(re){claim(re.cell[0],re.cell[1]);a.cx=re.cell[0];a.cy=re.cell[1];a.path=re.path;a.idx=0;step=0;continue}
           }
-          a.phase='back';a.leg=0;a.path=planHome([a.cx,a.cy],a.slot)||a.path.slice(0,-1).reverse();a.idx=0;step=0;
+          a.phase='back';a.path=planHome([a.cx,a.cy])||a.path.slice(0,-1).reverse();a.idx=0;step=0;
         }
-      }else if(a.phase==='back'&&a.leg<1){a.leg++;
-      }else if(a.phase==='back'){if(a.carry)a.b.delivered++;a.b.out--;a.dead=true;if(a.b.delivered>=a.b.total){a.b.done=true;a.b.pop=0}}
+      }else if(a.phase==='back'){ // down the hole with it
+        if(a.carry)a.b.delivered++;a.b.out--;a.dead=true;if(a.b.delivered>=a.b.total){a.b.done=true;a.b.pop=0}}
     }
   }
   S.ants=S.ants.filter(a=>!a.dead);
