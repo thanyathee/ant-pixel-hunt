@@ -962,13 +962,16 @@ function update(dt){
   S.slots.forEach((b,i)=>{
     if(!b)return;
     if(b.t<1)b.t=Math.min(1,b.t+dt*3.2);
+    // every ant still out is one the box has already counted, so it empties only once they have all gone
+    if(!b.done&&b.delivered>=b.total&&b.out===0){b.done=true;b.pop=0}
     if(b.done){b.pop+=dt*3.5;if(b.pop>=1)S.slots[i]=null;return}
     b.cd-=dt;
-    if(b.t>=1&&b.cd<=0&&b.out<(S.maxAnt||3)&&b.total-b.delivered-b.out>0){
+    if(b.t>=1&&b.cd<=0&&b.out<(S.maxAnt||3)&&b.delivered<b.total){
       // out of its own box, straight up into the tray above it
       const plan=findTarget(b.c,exitFor(i));
       if(plan){const cell=plan.cell,sa=slotAnchor(i);claim(cell[0],cell[1]);
         S.ants.push({b,slot:i,x:sa.x+(Math.random()-.5)*L.s*.5,y:sa.y,cx:cell[0],cy:cell[1],path:plan.path,idx:0,phase:'go',ang:-Math.PI/2,wig:Math.random()*6});
+        b.delivered++;   // the number drops as the ant leaves the box, not when it reaches the pixel
         b.out++;b.cd=S.antGap||0.3}
     }
   });
@@ -990,13 +993,12 @@ function update(dt){
             a.carry=a.b.c;S.filled--;
             if(S.hp&&S.hp[a.cy][a.cx]>1)S.hp[a.cy][a.cx]--;      // frost cracks, the pixel stays
             else{S.grid[a.cy][a.cx]=null;S.dirty=true}
-            a.b.delivered++;   // the box counts down the moment the pixel leaves the tray, not when the ant gets home
           }else{ // another ant got there first — walk on to the next pixel instead of trudging home empty
             const re=findTarget(a.b.c,[a.cx+1,a.cy+1]);
             if(re){claim(re.cell[0],re.cell[1]);a.cx=re.cell[0];a.cy=re.cell[1];a.path=re.path;a.idx=0;step=0;continue}
+            a.b.delivered--;   // came back empty, so hand its place back to the box
           }
           a.b.out--;           // done fetching; from here it is only carrying
-          if(a.b.delivered>=a.b.total){a.b.done=true;a.b.pop=0}
           a.phase='back';a.path=planHome([a.cx,a.cy])||a.path.slice(0,-1).reverse();a.idx=0;step=0;
         }
       }else if(a.phase==='back'){a.dead=true} // down the hole
@@ -1155,9 +1157,9 @@ const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
 function stateString(){
   if(!S||S.state==='win'||S.state==='lose'||S.state==='intro')return null;
-  // settle ants in flight: carried pixels count as delivered, walking ants just go home
-  const extra=new Map();S.ants.forEach(a=>{if(a.phase==='back')extra.set(a.b,(extra.get(a.b)||0)+1)});
-  const slots=S.slots.map(b=>{if(!b||b.done)return null;const d=b.delivered+(extra.get(b)||0);return d>=b.total?null:{c:b.c,total:b.total,delivered:d}});
+  // the box counts an ant the moment it leaves, so give back the ones still on their way to a pixel
+  const pend=new Map();S.ants.forEach(a=>{if(a.phase==='go')pend.set(a.b,(pend.get(a.b)||0)+1)});
+  const slots=S.slots.map(b=>{if(!b||b.done)return null;const d=b.delivered-(pend.get(b)||0);return d>=b.total?null:{c:b.c,total:b.total,delivered:d}});
   return JSON.stringify({v:2,n:S.n,filled:S.filled,start:S.start,
     grid:S.grid.map(r=>r.map(c=>c||'.').join('')),
     hp:S.hp?S.hp.map(r=>r.join('')):null,
