@@ -1106,7 +1106,9 @@ function hideOv(){ov.classList.remove('show')}
 const b64=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const unb64=s=>decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
 function saveCode(){saveState();
-  return b64(JSON.stringify({level:saved,max:maxLv,state:lsGet(SAVE_KEY)||''}))}
+  // the level number rides in front in plain text so the code is readable at a glance;
+  // applyCode only looks at the base64 run at the end, so the prefix is harmless
+  return `ด่าน ${saved+1} · `+b64(JSON.stringify({level:saved,max:maxLv,state:lsGet(SAVE_KEY)||''}))}
 function applyCode(txt){
   try{
     const m=String(txt||'').trim().match(/[A-Za-z0-9_\-]{16,}$/);if(!m)return false;
