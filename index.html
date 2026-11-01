@@ -873,8 +873,8 @@ function loadLevel(n,boot){
 function layout(){
   if(!S)return;
   const pad=12,W=cw,H=ch;
-  const HOLE=22;                     // strip above the tray that holds the nest hole
-  const top=8+HOLE;
+  const HOLE=22;                     // the nest hole straddles the tray's top edge
+  const top=8+HOLE/2;
   const bh=Math.max(140,H*0.47),bw=W-pad*2;
   const cell=Math.max(4,Math.floor(Math.min((bw-10)/(S.gw+2),(bh-10)/(S.gh+2))));
   L.board={x:pad,y:top,w:bw,h:bh};L.cell=cell;
@@ -882,7 +882,7 @@ function layout(){
   const NS=S.slots.length;const s=Math.min(60,(W-pad*2)/NS-12);L.s=s;
   L.slotY=top+bh+18;const sg=(W-pad*2-s*NS)/NS;
   L.slotX=i=>pad+sg/2+i*(s+sg);
-  L.hole={x:W/2,y:8+HOLE/2};
+  L.hole={x:W/2,y:top};   // centre of the hole sits exactly on the tray edge
   L.qY=L.slotY+s+24;
   let q=Math.min(62,(W-pad*2)/4-16);const avail=H-L.qY-6;q=Math.max(30,Math.min(q,avail/3-10));L.q=q;
   const qg=(W-pad*2-q*4)/4;L.qX=i=>pad+qg/2+i*(q+qg);L.qRow=r=>L.qY+r*(q+10);
