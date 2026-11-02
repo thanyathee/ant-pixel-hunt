@@ -945,8 +945,10 @@ function planRoute(c,from,limit){
   path.push([best[0]+1,best[1]+1]);
   return{cell:best,path};
 }
-// one unclaimed pixel if there is one, otherwise share — but never more than two ants on the same pixel
-const findTarget=(c,from)=>planRoute(c,from,1)||planRoute(c,from,2);
+// One pixel per ant, never shared. The boxes for a colour add up to exactly the pixels of that colour
+// on the tray, so there is always an unclaimed one left for each ant a box sends out — no wasted trips.
+// A claimed pixel also stays reachable, because the board only ever opens up as pixels are taken.
+const findTarget=(c,from)=>planRoute(c,from,1);
 // homeward: carry the pixel back down to the nest hole in the middle
 function planHome(cell){
   const{dist,par,PW}=routesFrom(entryFor()),id=(cell[1]+1)*PW+(cell[0]+1);
@@ -962,8 +964,8 @@ function update(dt){
   S.slots.forEach((b,i)=>{
     if(!b)return;
     if(b.t<1)b.t=Math.min(1,b.t+dt*3.2);
-    // every ant still out is one the box has already counted, so it empties only once they have all gone
-    if(!b.done&&b.delivered>=b.total&&b.out===0){b.done=true;b.pop=0}
+    // the last ant is out, so the box has nothing left to give — clear the slot straight away
+    if(!b.done&&b.delivered>=b.total){b.done=true;b.pop=0}
     if(b.done){b.pop+=dt*3.5;if(b.pop>=1)S.slots[i]=null;return}
     b.cd-=dt;
     if(b.t>=1&&b.cd<=0&&b.out<(S.maxAnt||3)&&b.delivered<b.total){
@@ -996,7 +998,6 @@ function update(dt){
           }else{ // another ant got there first — walk on to the next pixel instead of trudging home empty
             const re=findTarget(a.b.c,[a.cx+1,a.cy+1]);
             if(re){claim(re.cell[0],re.cell[1]);a.cx=re.cell[0];a.cy=re.cell[1];a.path=re.path;a.idx=0;step=0;continue}
-            a.b.delivered--;   // came back empty, so hand its place back to the box
           }
           a.b.out--;           // done fetching; from here it is only carrying
           a.phase='back';a.path=planHome([a.cx,a.cy])||a.path.slice(0,-1).reverse();a.idx=0;step=0;
@@ -1162,10 +1163,21 @@ function stateString(){
   // the box counts an ant the moment it leaves, so give back the ones still on their way to a pixel
   const pend=new Map();S.ants.forEach(a=>{if(a.phase==='go')pend.set(a.b,(pend.get(a.b)||0)+1)});
   const slots=S.slots.map(b=>{if(!b||b.done)return null;const d=b.delivered-(pend.get(b)||0);return d>=b.total?null:{c:b.c,total:b.total,delivered:d}});
+  const cols=S.cols.map(col=>col.map(b=>[b.c,b.total,b.mystery?(b.revealed?2:1):0]));
+  // A box leaves the slot as soon as its last ant is out, so ants still walking may belong to a box
+  // that is already gone. Count what is actually left on the tray and hand any orphan pixels a box of
+  // their own, otherwise the reloaded level would have colours nothing can collect.
+  const onTray={};
+  for(let y=0;y<S.gh;y++)for(let x=0;x<S.gw;x++){const c=S.grid[y][x];if(!c||c==='Q')continue;
+    onTray[c]=(onTray[c]||0)+(S.hp?S.hp[y][x]:1)}
+  const covered={};
+  slots.forEach(b=>{if(b)covered[b.c]=(covered[b.c]||0)+(b.total-b.delivered)});
+  cols.forEach(col=>col.forEach(([c,t])=>covered[c]=(covered[c]||0)+t));
+  for(const c in onTray){const gap=onTray[c]-(covered[c]||0);if(gap>0)cols[0].push([c,gap,0])}
   return JSON.stringify({v:2,n:S.n,filled:S.filled,start:S.start,
     grid:S.grid.map(r=>r.map(c=>c||'.').join('')),
     hp:S.hp?S.hp.map(r=>r.join('')):null,
-    cols:S.cols.map(col=>col.map(b=>[b.c,b.total,b.mystery?(b.revealed?2:1):0])),slots});
+    cols,slots});
 }
 function stamp(){lsSet(STAMP_KEY,String(Date.now()))}
 function saveState(){const st=stateString();if(st===null||st===lsGet(SAVE_KEY))return;lsSet(SAVE_KEY,st);stamp();pushCloud()}
