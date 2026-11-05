@@ -120,7 +120,7 @@ function cfg(n){
     bands: n<60?1 : n<160?2 : 3,                      // the backdrop is this many colours, in stripes
     slots: k<5?6 : k<30?5 : k<60?4 : 3,
     preview: k<10?3 : k<35?2 : 1,
-    spread: 0.4+k*0.22,
+    spread: Math.min(9,0.4+k*0.22),
     chunkMin: 6+Math.round(k*0.07),
     chunkSpan: 12+Math.round(k*0.18)
   };
@@ -835,15 +835,58 @@ function solvable(g0,cols0,nslots,hp0){
   }
   return filled===0;
 }
+// For every pixel, how many pixels of OTHER colours an ant must get through to reach it. Returns, per
+// colour, its pixels grouped into tiers by that number: the burger's outline has most of its pixels at
+// tier 0 around the outside and a few at tier 5 tucked between the layers; a star inside the sky has all
+// of its pixels at a deep tier. Boxes are then cut tier by tier, so a box is never handed out before the
+// pixels that would fill it can be reached — which is what used to jam a slot for good.
+function coverTiers(g){
+  if(g.__tiers)return g.__tiers;
+  const h=g.length,w=g[0].length,PW=w+2,PH=h+2,out={};
+  const colours=new Set();g.forEach(r=>r.forEach(c=>{if(c&&c!=='Q')colours.add(c)}));
+  const at=(x,y)=>(x<1||y<1||x>w||y>h)?null:g[y-1][x-1];   // the padded ring reads as empty
+  for(const c of colours){
+    const N=PW*PH,dist=new Int32Array(N).fill(-1),dq=new Int32Array(N*4);
+    let head=N*2,tail=head;                                 // deque for 0-1 BFS
+    const push=(id,d,zero)=>{dist[id]=d;if(zero)dq[--head]=id;else dq[tail++]=id};
+    for(let x=0;x<PW;x++)for(const y of [0,PH-1]){const id=y*PW+x;if(dist[id]<0)push(id,0,true)}
+    for(let y=1;y<PH-1;y++)for(const x of [0,PW-1]){const id=y*PW+x;if(dist[id]<0)push(id,0,true)}
+    while(head<tail){
+      const id=dq[head++],x=id%PW,y=(id-x)/PW,dc=dist[id];
+      for(const[dx,dy]of N4){const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=PW||ny>=PH)continue;
+        const nid=ny*PW+nx,v=at(nx,ny),step=(!v||v===c)?0:1,nd=dc+step;
+        if(dist[nid]>=0&&dist[nid]<=nd)continue;
+        push(nid,nd,step===0);}
+    }
+    const hist=new Map();
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(g[y][x]===c){
+      const t=Math.max(0,dist[(y+1)*PW+(x+1)]);hist.set(t,(hist.get(t)||0)+1)}
+    out[c]=[...hist.entries()].sort((p,q)=>p[0]-q[0]);
+  }
+  try{Object.defineProperty(g,'__tiers',{value:out,enumerable:false})}catch(e){}
+  return out;
+}
 function buildBoxes(g,n,attempt,d,hp){
-  const h=g.length,w=g[0].length,r=rng(1000+n*97+attempt*7919),dm=depthMap(g),cnt={},dsum={};let filled=0;
+  const h=g.length,w=g[0].length,r=rng(1000+n*97+attempt*7919),cnt={};let filled=0;
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){const c=g[y][x];if(!c||c==='Q')continue;
-    const u=hp?hp[y][x]:1;cnt[c]=(cnt[c]||0)+u;dsum[c]=(dsum[c]||0)+dm[y][x]*u;filled+=u}
-  const spread=Math.max(0,d.spread-attempt*1.2),chunks=[];
-  for(const c in cnt){let left=cnt[c];const avg=dsum[c]/cnt[c];let part=0;
-    const mul=d.scale*d.scale*(d.scene?2.2:1); // scenes are one big field, so they come in bigger boxes
-    while(left>0){let s=Math.min(left,Math.round((d.chunkMin+Math.floor(r()*d.chunkSpan))*mul));if(left-s>0&&left-s<5)s=left;
-      chunks.push({c,total:s,key:avg+part*1.2+r()*spread});left-=s;part++}}
+    cnt[c]=(cnt[c]||0)+(hp?hp[y][x]:1);filled+=(hp?hp[y][x]:1)}
+  const spread=Math.max(0,d.spread-attempt*1.2),chunks=[],tiers=coverTiers(g);
+  const mul=d.scale*d.scale*(d.scene?2.2:1); // scenes are one big field, so they come in bigger boxes
+  // Cut each colour shallowest tier first, pooling consecutive tiers until there are enough pixels for a
+  // box of normal size, so a colour never turns into a string of one- and two-pixel boxes. Each box is
+  // keyed by the deepest tier it draws on, which is the safe end to key it by.
+  const size=()=>Math.max(1,Math.round((d.chunkMin+Math.floor(r()*d.chunkSpan))*mul));
+  for(const c in cnt){let part=0,buf=0,tier=0;
+    const list=tiers[c]||[[0,cnt[c]]];
+    const scale=cnt[c]/list.reduce((t,[,k])=>t+k,0);   // spreads frost units over the tiers, if ever used
+    const emit=sz=>{chunks.push({c,total:sz,key:tier*1000+part*1.2+r()*spread});part++};
+    let acc=0;
+    list.forEach(([t,px],i)=>{tier=t;
+      const take=(i===list.length-1)?cnt[c]-acc:Math.round(px*scale);
+      acc+=take;buf+=take;
+      let want=size();
+      while(buf>=want){emit(want);buf-=want;want=size()}});
+    if(buf>0)emit(buf);}
   chunks.sort((a,b)=>a.key-b.key);
   const cols=[[],[],[],[]];chunks.forEach((k,i)=>cols[i%4].push({c:k.c,total:k.total,delivered:0,out:0,t:1,cd:0,done:false,pop:0,
     mystery:!!d.mystery&&(i%3===1),revealed:false}));
