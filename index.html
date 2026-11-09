@@ -1064,7 +1064,13 @@ function update(dt){
     if(free>0)for(const col of S.cols){for(let i=0;i<Math.min(free,col.length);i++)if(hasReachable(col[i].c)){canPlace=true;break}if(canPlace)break}
     S.dead=slotsBlocked&&!canPlace;
   }
-  if(S.ants.length===0&&S.dead){S.stuck+=dt;
+  // A watchdog behind that one: if nothing at all has come off the tray for a while and there is no box
+  // the player could still place, the level is stuck even with ants on screen. Better to say so and offer
+  // a restart than to sit there looking frozen.
+  if(S.filled!==S.lastFilled){S.lastFilled=S.filled;S.idle=0}else S.idle=(S.idle||0)+dt;
+  const canAct=S.slots.some(b=>!b)&&S.cols.some(c=>c.length);   // a free slot and something to put in it
+  const wedged=S.idle>12&&!canAct;
+  if((S.ants.length===0&&S.dead)||wedged){S.stuck+=dt;
     if(S.stuck>0.7){S.state='lose';clearState();
       const full=S.slots.every(b=>b&&!b.done);
       showOv(full?'ช่องเต็มแล้ว':'ไปต่อไม่ได้แล้ว','มดเข้าไม่ถึงสีที่เหลืออยู่ ลองเก็บสีขอบนอกก่อน แล้วค่อยเปิดทางเข้าข้างใน','เล่นด่านนี้อีกครั้ง',()=>loadLevel(S.n))}}
@@ -1074,7 +1080,7 @@ function update(dt){
 // ---------- draw ----------
 function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
 function drawBox(x,y,s,c,num,lid){
-  const col=PAL[c],lip=Math.max(3,s*.1);
+  const col=PAL[c]||PAL.S,lip=Math.max(3,s*.1);
   if(lid){ctx.fillStyle=shade(col,-.2);rr(x+s*.2,y-s*.12,s*.6,s*.25,s*.08);ctx.fill();ctx.fillStyle=shade(col,.15);rr(x+s*.27,y-s*.06,s*.46,s*.14,s*.05);ctx.fill()}
   ctx.fillStyle=shade(col,-.28);rr(x,y+lip,s,s-lip,s*.2);ctx.fill();
   ctx.fillStyle=col;rr(x,y,s,s-lip,s*.2);ctx.fill();
@@ -1233,6 +1239,8 @@ function restoreState(){
   const grid=d.grid.map(r=>r.split('').map(c=>c==='.'?null:c));
   // a save written by an older palette may name a colour this build no longer has — start the level fresh
   for(const row of grid)for(const c of row)if(c&&!PAL[c])return false;
+  for(const col of (d.cols||[]))for(const bx of col)if(!PAL[bx[0]])return false;
+  for(const b of (d.slots||[]))if(b&&!PAL[b.c])return false;
   const hp=d.hp?d.hp.map(r=>r.split('').map(Number)):null;
   let filled=0;for(let y=0;y<grid.length;y++)for(let x=0;x<grid[0].length;x++){const c=grid[y][x];if(c&&c!=='Q')filled+=hp?hp[y][x]:1}
   saved=d.n;
@@ -1280,8 +1288,22 @@ async function initCloud(){
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveState()});
 window.addEventListener('pagehide',saveState);
 setInterval(saveState,2000);
-let last=performance.now();
-function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;update(dt);draw();requestAnimationFrame(loop)}
+let last=performance.now(),frameErrs=0;
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  // Whatever happens in here, ask for the next frame. An exception used to escape this function, which
+  // stopped requestAnimationFrame being called again and froze the game for good with no way back.
+  try{update(dt);draw()}
+  catch(e){
+    frameErrs++;
+    if(frameErrs===1)console.error('frame failed',e);
+    if(frameErrs>90&&S&&S.state==='play'){   // a second and a half of broken frames: this level is not recoverable
+      S.state='lose';try{clearState()}catch(e2){}
+      showOv('เกมสะดุด','ด่านนี้มีบางอย่างผิดพลาด เริ่มด่านนี้ใหม่ได้เลย','เริ่มด่านนี้ใหม่',()=>{frameErrs=0;loadLevel(S.n)});
+    }
+  }
+  requestAnimationFrame(loop);
+}
 resize();
 const resumed=restoreState();
 if(!resumed)loadLevel(saved,true);
