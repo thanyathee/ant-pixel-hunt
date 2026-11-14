@@ -104,7 +104,9 @@ const farApart=(a,b)=>{const p=rgbOf(a),q=rgbOf(b);return Math.hypot((p[0]-q[0])
 function cfg(n){
   const k=Math.min(n,119);
   const combo=false; // off: one tray, one picture
-  const scene=n>=49&&n%5===4; // every fifth level from 50 on is a full-tray scene instead of one object
+  // About one level in five from 50 on is a full-tray scene instead of a single object. The spacing is
+  // hashed rather than every fifth level exactly, so scenes stop landing only on levels ending in 0 or 5.
+  const scene=n>=49&&((n*2654435761)>>>0)%5===0;
   return{
     combo, scene,
     // a scene already covers the whole tray, so it stays at the coarser pixel size
@@ -609,6 +611,175 @@ const LEVELS=[
     A.ell(12,7,10,3.4,'T');
     A.fill((x,y,c)=>c==='T'&&Math.floor(x)%6<2?'O':undefined);
     A.px(2,7,'G');A.px(21,7,'G');A.outline('K');})},
+
+  {name:'แมว',make:()=>mk(20,20,A=>{
+    A.poly([[4,8],[6,2],[9,8]],'S');A.poly([[11,8],[14,2],[16,8]],'S');
+    A.poly([[5.5,7],[6.5,4],[8,7]],'P');A.poly([[12,7],[13.5,4],[14.5,7]],'P');
+    A.ell(10,11,6.5,5,'S');A.ell(10,13,3.5,2.5,'W');
+    A.px(7,10,'G');A.px(13,10,'G');A.px(10,12,'P');
+    A.line(2,12,6,11,'W');A.line(2,14,6,13,'W');A.line(18,12,14,11,'W');A.line(18,14,14,13,'W');
+    A.outline('K');})},
+  {name:'หมา',make:()=>mk(20,20,A=>{
+    A.ell(6,8,2.5,4,'N');A.ell(14,8,2.5,4,'N');
+    A.ell(10,11,6,5,'T');A.ell(10,14,3,2.2,'W');
+    A.px(8,10,'K');A.px(12,10,'K');A.circ(10,13.5,1.2,'K');
+    A.outline('K');})},
+  {name:'เป็ดยาง',make:()=>mk(20,18,A=>{
+    A.ell(9,12,6.5,4.5,'Y');A.circ(13,6,3.6,'Y');
+    A.poly([[16,5],[19,6],[16,7.5]],'O');A.px(13,5,'K');
+    A.px(5,10,'O');A.outline('K');})},
+  {name:'นกฮูก',make:()=>mk(18,20,A=>{
+    A.ell(9,11,6.5,7,'N');A.ell(9,12,4.5,5,'T');
+    A.circ(6,8,2.4,'W');A.circ(12,8,2.4,'W');A.px(6,8,'K');A.px(12,8,'K');
+    A.poly([[8,10],[10,10],[9,12]],'O');
+    A.poly([[3,5],[5,3],[6,6]],'N');A.poly([[15,5],[13,3],[12,6]],'N');
+    A.outline('K');})},
+  {name:'ผีเสื้อ',make:()=>mk(22,18,A=>{
+    A.ell(6,6,5,3.6,'M');A.ell(16,6,5,3.6,'M');      // upper wings
+    A.ell(6.5,12.5,4,3,'V');A.ell(15.5,12.5,4,3,'V'); // lower wings
+    A.circ(5,6,1.6,'Y');A.circ(17,6,1.6,'Y');
+    A.px(6,12,'C');A.px(7,13,'C');A.px(16,12,'C');A.px(15,13,'C');
+    A.rect(10,4,2,11,'N');A.circ(11,4,1.4,'N');
+    A.line(11,3,9,0,'N');A.line(11,3,13,0,'N');A.outline('K');})},
+  {name:'ปลาทอง',make:()=>mk(22,16,A=>{
+    A.ell(9,8,6,4.5,'O');A.poly([[15,8],[21,4],[21,12]],'R');
+    A.poly([[8,4],[12,4],[10,1]],'R');A.px(5,9,'W');A.px(6,7,'K');
+    A.fill((x,y,c)=>c==='O'&&Math.floor(x)%3===0?'Y':undefined);A.outline('K');})},
+  {name:'เต่า',make:()=>mk(22,16,A=>{
+    A.ell(11,10,8,5,'G');A.ell(11,10,6,3.4,'D');
+    A.fill((x,y,c)=>c==='D'&&(Math.floor(x)+Math.floor(y))%3===0?'G':undefined);
+    A.circ(19,9,2.4,'G');A.px(20,8,'K');
+    A.ell(5,14,2,1.4,'G');A.ell(15,14,2,1.4,'G');A.outline('K');})},
+  {name:'กบ',make:()=>mk(20,18,A=>{
+    A.ell(10,11,7,5,'G');A.circ(6,6,2.6,'G');A.circ(14,6,2.6,'G');
+    A.px(6,6,'K');A.px(14,6,'K');A.line(6,13,14,13,'D');
+    A.ell(3,15,2,1.4,'G');A.ell(17,15,2,1.4,'G');A.outline('K');})},
+  {name:'ผึ้ง',make:()=>mk(20,16,A=>{
+    A.ell(10,9,6,4.5,'Y');
+    A.fill((x,y,c)=>c==='Y'&&Math.floor((x-4)/2)%2===0?'K':undefined);
+    A.circ(4,8,2.6,'K');A.px(3,7,'W');
+    A.ell(9,4,3,1.8,'W');A.ell(14,4,3,1.8,'W');
+    A.poly([[16,9],[18,8],[18,10]],'K');A.outline('K');})},
+  {name:'เพนกวิน',make:()=>mk(18,20,A=>{
+    A.ell(9,11,6,8,'K');A.ell(9,12,4,6,'W');
+    A.circ(5,11,1.4,'K');A.circ(13,11,1.4,'K');
+    A.px(7,6,'W');A.px(11,6,'W');
+    A.poly([[8,8],[11,8],[9.5,10]],'O');
+    A.ell(7,19,2,1,'O');A.ell(11,19,2,1,'O');A.outline('K');})},
+  {name:'หมี',make:()=>mk(20,20,A=>{
+    A.circ(5,5,2.6,'N');A.circ(15,5,2.6,'N');A.circ(5,5,1.3,'T');A.circ(15,5,1.3,'T');
+    A.ell(10,11,7,6.5,'N');A.ell(10,14,4,3,'T');
+    A.px(7,9,'K');A.px(13,9,'K');A.circ(10,13,1.2,'K');A.outline('K');})},
+  {name:'กระต่าย',make:()=>mk(18,22,A=>{
+    A.ell(6,5,1.8,4.5,'W');A.ell(12,5,1.8,4.5,'W');
+    A.ell(6,5,0.9,3,'P');A.ell(12,5,0.9,3,'P');
+    A.ell(9,14,6,6,'W');A.px(7,12,'R');A.px(11,12,'R');A.circ(9,15,1.2,'P');
+    A.circ(15,18,2,'W');A.outline('K');})},
+  {name:'จิ้งจอก',make:()=>mk(22,18,A=>{
+    A.poly([[5,8],[6,3],[9,8]],'O');A.poly([[13,8],[16,3],[17,8]],'O');
+    A.ell(11,10,6,4.5,'O');A.poly([[8,12],[14,12],[11,16]],'W');
+    A.px(9,9,'K');A.px(13,9,'K');A.px(11,13,'K');
+    A.poly([[5,12],[1,16],[6,15]],'O');A.px(1,16,'W');A.outline('K');})},
+  {name:'ช้าง',make:()=>mk(24,18,A=>{
+    A.ell(13,9,7,6,'S');A.ell(6,8,4.5,5.5,'S');
+    A.rect(4,11,2,6,'S');A.ell(5,17,2,1,'S');
+    A.px(12,7,'K');A.px(16,7,'K');
+    A.ell(19,10,3,4,'S');A.rect(10,15,3,2,'S');A.rect(16,15,3,2,'S');A.outline('K');})},
+  {name:'ยีราฟ',make:()=>mk(20,24,A=>{
+    A.ell(8,15,6,4,'Y');                       // body
+    A.rect(11,5,3,10,'Y');                     // neck
+    A.poly([[11,7],[14,4],[15,8]],'Y');        // head
+    A.px(15,6,'K');A.rect(13,3,1,2,'N');A.rect(15,3,1,2,'N');
+    A.rect(4,19,2,5,'Y');A.rect(8,19,2,5,'Y');A.rect(11,18,2,6,'Y');
+    A.rect(2,13,2,5,'N');                      // tail
+    A.dots(14,401,(c,x,y)=>c==='Y'&&y>9,['N']);A.outline('K');})},
+  {name:'ปลาวาฬ',make:()=>mk(24,16,A=>{
+    A.ell(11,9,9,5,'B');A.ell(11,11,7,3,'W');
+    A.poly([[19,9],[23,5],[23,13]],'B');A.px(6,7,'K');
+    A.line(9,3,9,1,'C');A.line(8,2,10,2,'C');A.outline('K');})},
+  {name:'ดาวทะเล',make:()=>mk(20,20,A=>{
+    const pts=[];for(let i=0;i<10;i++){const a=i*0.628-1.57,r=i%2?3.4:8.5;pts.push([10+Math.cos(a)*r,10+Math.sin(a)*r])}
+    A.poly(pts,'O');A.dots(10,411,c=>c==='O',['Y']);A.outline('K');})},
+  {name:'แมงกะพรุน',make:()=>mk(20,22,A=>{
+    A.fill((x,y)=> y<11&&Math.hypot((x-10)/7,(y-11)/7)<=1?'P':undefined);
+    A.fill((x,y,c)=>c==='P'&&y<7?'L':undefined);
+    for(const x of [4,7,10,13,16])for(let y=11;y<21;y++)A.px(x+((Math.floor(y/2)%2)?1:0),y,'M');
+    A.px(7,8,'K');A.px(13,8,'K');A.outline('K');})},
+  {name:'ไดโนเสาร์',make:()=>mk(24,20,A=>{
+    A.ell(12,12,8,5,'G');A.ell(19,7,4,3.4,'G');A.px(21,6,'K');
+    A.poly([[4,12],[0,9],[1,15]],'G');
+    for(let k=0;k<5;k++)A.poly([[6+k*3,8],[8+k*3,8],[7+k*3,5]],'D');
+    A.rect(8,16,2,3,'G');A.rect(14,16,2,3,'G');A.outline('K');})},
+  {name:'มังกร',make:()=>mk(24,20,A=>{
+    A.ell(10,13,8,4,'G');                      // body
+    A.poly([[2,13],[0,8],[3,11]],'G');         // tail
+    A.ell(18,9,4.5,3.6,'G');                   // head
+    A.px(19,8,'Y');A.px(20,8,'K');
+    A.poly([[21,10],[24,11],[21,12]],'O');     // snout flame
+    A.poly([[8,10],[14,3],[16,10]],'M');       // wing
+    for(let k=0;k<4;k++)A.poly([[5+k*3,10],[7+k*3,10],[6+k*3,7]],'Y');
+    A.rect(7,16,2,3,'G');A.rect(13,16,2,3,'G');A.outline('K');})},
+  {name:'หุ่นยนต์',make:()=>mk(20,22,A=>{
+    A.rect(6,3,8,6,'S');A.px(8,5,'C');A.px(11,5,'C');A.rect(8,7,4,1,'K');
+    A.rect(9,1,2,2,'R');A.rect(5,10,10,8,'B');A.rect(8,12,4,3,'Y');
+    A.rect(2,11,3,5,'S');A.rect(15,11,3,5,'S');
+    A.rect(6,18,3,3,'S');A.rect(11,18,3,3,'S');A.outline('K');})},
+  {name:'จรวด',make:()=>mk(16,24,A=>{
+    A.poly([[8,0],[12,9],[4,9]],'R');A.rect(4,9,8,9,'W');
+    A.circ(8,12,2.2,'C');A.rect(4,15,8,2,'R');
+    A.poly([[4,14],[1,20],[4,18]],'R');A.poly([[12,14],[15,20],[12,18]],'R');
+    A.poly([[5,18],[11,18],[8,23]],'O');A.poly([[6,18],[10,18],[8,21]],'Y');A.outline('K');})},
+  {name:'รถยนต์',make:()=>mk(24,16,A=>{
+    A.rect(2,8,20,4,'R');A.poly([[6,8],[18,8],[15,3],[9,3]],'R');
+    A.rect(10,4,5,4,'C');A.rect(7,5,2,3,'C');
+    A.circ(6,12,2.4,'K');A.circ(18,12,2.4,'K');A.px(6,12,'S');A.px(18,12,'S');
+    A.px(22,9,'Y');A.outline('K');})},
+  {name:'เรือใบ',make:()=>mk(22,22,A=>{
+    A.poly([[11,2],[18,14],[12,14]],'W');A.poly([[10,5],[10,14],[4,14]],'R');
+    A.rect(10,2,1,12,'N');
+    A.poly([[2,15],[20,15],[17,19],[5,19]],'N');
+    A.fill((x,y)=> y>=19?'B':undefined);
+    A.fill((x,y,c)=>c==='B'&&Math.floor(y)%2===0?'C':undefined);A.outline('K');})},
+  {name:'เครื่องบิน',make:()=>mk(24,18,A=>{
+    A.ell(12,8,10,2.6,'W');A.poly([[22,8],[20,6],[20,10]],'S');
+    A.poly([[10,7],[16,7],[12,1]],'S');A.poly([[10,9],[16,9],[12,15]],'S');
+    A.poly([[2,8],[5,4],[6,8]],'R');
+    for(const x of [8,11,14,17])A.px(x,7,'C');A.outline('K');})},
+  {name:'ร่ม',make:()=>mk(22,22,A=>{
+    A.fill((x,y)=> y<12&&Math.hypot((x-11)/10,(y-12)/9)<=1?'R':undefined);
+    A.fill((x,y,c)=>c==='R'&&Math.floor((x-1)/3)%2===0?'W':undefined);
+    A.rect(10,12,2,8,'N');A.poly([[6,20],[10,20],[10,21],[7,21]],'N');A.outline('K');})},
+  {name:'นาฬิกา',make:()=>mk(20,20,A=>{
+    A.circ(10,11,8,'S');A.circ(10,11,6.5,'W');
+    A.line(10,11,10,6,'K');A.line(10,11,14,12,'K');
+    for(let i=0;i<12;i++){const a=i*0.5236;A.px(Math.round(10+Math.cos(a)*5.5),Math.round(11+Math.sin(a)*5.5),'K')}
+    A.rect(8,1,4,2,'S');A.circ(10,11,1,'R');A.outline('K');})},
+  {name:'กล้องถ่ายรูป',make:()=>mk(22,16,A=>{
+    A.rect(2,5,18,9,'K');A.rect(7,2,6,3,'K');
+    A.circ(11,9,4,'S');A.circ(11,9,2.6,'B');A.px(10,8,'W');
+    A.rect(3,6,3,2,'R');A.px(17,6,'Y');A.outline('K');})},
+  {name:'หนังสือ',make:()=>mk(24,18,A=>{
+    A.poly([[2,5],[11,3],[11,15],[2,14]],'W');A.poly([[13,3],[22,5],[22,14],[13,15]],'W');
+    A.rect(11,3,2,12,'N');
+    for(let y=6;y<13;y+=2){A.rect(3,y,7,1,'S');A.rect(14,y,7,1,'S')}A.outline('K');})},
+  {name:'กีตาร์',make:()=>mk(18,24,A=>{
+    A.ell(9,18,6,5,'N');A.ell(9,12,4.4,3.6,'N');
+    A.circ(9,16,2.4,'K');A.rect(8,15,2,7,'T');
+    A.rect(8,3,2,9,'T');A.rect(6,0,6,3,'K');
+    A.px(7,1,'W');A.px(9,1,'W');A.px(11,1,'W');
+    for(const x of [8,9])A.line(x,3,x,19,'W');A.outline('K');})},
+  {name:'ว่าว',make:()=>mk(20,24,A=>{
+    A.poly([[10,1],[17,9],[10,17],[3,9]],'C');
+    A.fill((x,y,c)=>c==='C'&&(x-10)+(y-9)>0?'B':undefined);
+    A.line(10,1,10,17,'K');A.line(3,9,17,9,'K');
+    for(const y of [19,22])A.rect(9,y,3,1,'R');A.line(10,17,10,23,'S');A.outline('K');})},
+  {name:'ตุ๊กตาหมี',make:()=>mk(20,22,A=>{
+    A.circ(5,4,2.4,'N');A.circ(15,4,2.4,'N');
+    A.ell(10,7,4.5,3.6,'N');A.ell(10,8.5,2.6,2,'T');
+    A.px(8,6,'K');A.px(12,6,'K');A.px(10,8,'K');
+    A.ell(10,15,5.5,5,'N');A.ell(10,16,3,3,'T');
+    A.ell(3,13,2,2.6,'N');A.ell(17,13,2,2.6,'N');
+    A.ell(7,20,2,1.6,'N');A.ell(13,20,2,1.6,'N');A.outline('K');})},
 ];
 
 // Full-tray scenes: the picture IS the whole board, so the ants eat inward from the rim.
@@ -687,6 +858,113 @@ const SCENES=[
     A.fill((x,y)=>{const u=(x-22)*0.95+(y-11)*0.45;return Math.abs(u)<1.6&&Math.hypot((x-22)/11,(y-11)/5)<=1?'T':undefined});
     A.circ(7,21,3.2,'S');A.circ(6,20,1.2,'Q');A.circ(9,22.5,1,'Q');
     A.ell(6,5,2.6,1.4,'R');})},
+  {name:'นาขั้นบันได',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<8?'C':'G');A.circ(27,4,3,'Y');
+    for(let i=0;i<5;i++){const y0=8+i*4;
+      A.fill((x,y)=>y>=y0&&y<y0+3?((i%2)?'D':'G'):undefined);
+      A.fill((x,y)=>y>=y0+3&&y<y0+4?'N':undefined);}
+    A.fill((x,y,c)=>(c==='G'||c==='D')&&(Math.floor(x)*3+Math.floor(y)*5)%7===0?'Y':undefined);
+    [[6,3],[9,2],[12,3]].forEach(([x,y])=>A.px(x,y,'W'));})},
+  {name:'วัดไทย',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<10?'O':y<15?'T':'N');
+    A.circ(6,5,3,'Y');
+    A.poly([[17,2],[21,14],[13,14]],'Y');A.poly([[17,5],[19,14],[15,14]],'O');
+    A.rect(12,14,11,6,'R');A.poly([[11,14],[24,14],[17,9]],'G');
+    A.rect(16,16,3,4,'K');
+    A.fill((x,y)=> y>=20?'D':undefined);
+    A.fill((x,y,c)=>c==='D'&&Math.floor(y)%3===0?'G':undefined);})},
+  {name:'ตลาดน้ำ',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<9?'C':y<13?'G':'B');
+    A.fill((x,y,c)=>c==='B'&&Math.floor(y)%3===0?'D':undefined);
+    A.circ(29,4,2.6,'Y');
+    for(const[x0,col] of [[3,'R'],[14,'Y'],[24,'M']]){
+      A.poly([[x0,16],[x0+8,16],[x0+7,19],[x0+1,19]],'N');
+      A.rect(x0+1,13,6,3,col);A.rect(x0+3,11,2,2,'W');}
+    A.dots(22,381,(c,x,y)=>c==='B'&&y>20,['W']);})},
+  {name:'หิมะตก',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<17?'S':'W');
+    A.dots(40,301,c=>c==='S',['W']);
+    for(const[x0,w,h,col] of [[4,8,7,'N'],[16,7,6,'R'],[25,7,8,'V']]){
+      A.rect(x0,17-h,w,h,col);A.poly([[x0-1,17-h],[x0+w+1,17-h],[x0+w/2,17-h-4]],'W');
+      A.rect(x0+2,20-h,2,2,'Y');}
+    A.fill((x,y)=> y>=22?'W':undefined);
+    for(const x of [10,22]){A.circ(x,20,1.6,'D');A.line(x,21,x,24,'D')}})},
+  {name:'ใบไม้ร่วง',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<19?'T':'N');
+    for(const[px,sc] of [[7,1],[18,1.3],[28,1]]){
+      A.circ(px,9,5*sc,'O');A.fill((x,y,c)=>c==='O'&&Math.hypot(x-px,y-9)<3.2*sc?'R':undefined);
+      A.rect(Math.round(px-1),13,2,9,'K');}
+    A.dots(26,311,c=>c==='T',['O','R','Y']);
+    A.fill((x,y,c)=>c==='N'&&(Math.floor(x)+Math.floor(y))%4===0?'O':undefined);})},
+  {name:'ทะเลทราย',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<14?'O':'T');
+    A.circ(25,6,4,'Y');
+    A.fill((x,y)=> y>=14&&y<18&&Math.hypot((x-8)/14,(y-18)/5)<=1?'N':undefined);
+    A.rect(14,12,3,10,'G');A.rect(11,15,3,2,'G');A.rect(11,13,2,3,'G');
+    A.rect(17,16,3,2,'G');A.rect(19,13,2,4,'G');
+    A.dots(16,321,c=>c==='T',['N']);
+    [[5,8],[8,7]].forEach(([x,y])=>A.ell(x,y,2.4,1,'W'));})},
+  {name:'ภูเขาไฟ',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<18?'V':'K');
+    A.dots(22,331,c=>c==='V',['M','R']);
+    A.poly([[3,22],[14,6],[25,22]],'N');
+    A.poly([[11,7],[17,7],[20,22],[8,22]],'K');
+    A.poly([[12,6],[16,6],[17,12],[11,12]],'O');A.poly([[13,6],[15,6],[15,10],[13,10]],'Y');
+    for(const[x,y] of [[10,4],[18,3],[14,1]])A.circ(x,y,1.6,'R');
+    A.fill((x,y)=> y>=23?'D':undefined);})},
+  {name:'พายุฟ้าผ่า',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<13?'S':'D');
+    A.ell(9,6,7,3.5,'K');A.ell(22,5,8,4,'K');
+    A.poly([[16,9],[20,9],[17,16],[20,16],[14,25],[16,17],[13,17]],'Y');
+    for(const x of [4,8,26,30])for(let y=14;y<24;y+=3)A.px(x,y,'C');
+    A.fill((x,y)=> y>=25?'K':undefined);})},
+  {name:'ทุ่งลาเวนเดอร์',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<10?'C':'G');A.circ(5,4,3,'Y');
+    for(let row=0;row<5;row++){const y0=11+row*3.4;
+      for(let x=1;x<33;x+=3)A.rect(Math.round(x),Math.round(y0),2,3,(row%2)?'V':'M');}
+    A.fill((x,y,c)=>(c==='V'||c==='M')&&Math.floor(y)%3===2?'G':undefined);
+    [[22,4],[27,3]].forEach(([x,y])=>A.ell(x,y,3,1.2,'W'));})},
+  {name:'ประภาคาร',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<17?'C':'B');
+    A.fill((x,y,c)=>c==='B'&&Math.floor(y)%3===0?'D':undefined);
+    A.poly([[11,20],[21,20],[19,5],[13,5]],'W');
+    A.fill((x,y,c)=>c==='W'&&Math.floor((y-5)/3)%2===0?'R':undefined);
+    A.rect(13,2,6,3,'Y');A.poly([[12,2],[20,2],[16,-1]],'K');
+    A.poly([[19,3],[32,0],[32,7]],'Y');
+    A.fill((x,y)=> y>=20?'N':undefined);
+    A.dots(14,341,c=>c==='N',['S']);})},
+  {name:'บอลลูน',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<20?'C':'G');A.circ(4,4,2.6,'Y');
+    for(const[x,y,c1,c2] of [[9,8,'R','Y'],[22,6,'V','C'],[28,14,'M','W']]){
+      A.ell(x,y,4,4.5,c1);A.fill((xx,yy,c)=>c===c1&&(Math.floor(xx)+1)%4<2?c2:undefined);
+      A.line(x-2,y+4,x,y+7,'K');A.line(x+2,y+4,x,y+7,'K');A.rect(Math.round(x)-1,Math.round(y)+7,2,2,'N');}
+    A.fill((x,y,c)=>c==='G'&&Math.floor(y)%3===0?'D':undefined);})},
+  {name:'กังหันลม',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<19?'C':'G');
+    A.dots(10,351,c=>c==='C',['W']);
+    for(const[px,sc] of [[8,1],[20,1.3],[29,0.8]]){
+      A.rect(Math.round(px),Math.round(10+2/sc),1,9,'W');
+      const cy=10+2/sc;
+      for(let k=0;k<3;k++){const a=k*2.09;A.line(px,cy,px+Math.cos(a)*6*sc,cy+Math.sin(a)*6*sc,'W');}
+      A.px(px,cy,'S');}
+    A.fill((x,y,c)=>c==='G'&&(Math.floor(x)+Math.floor(y))%5===0?'Y':undefined);})},
+  {name:'ชิงช้าสวรรค์',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<22?'V':'K');
+    A.dots(24,361,c=>c==='V',['W']);
+    A.fill((x,y)=>{const d=Math.hypot(x-17,y-12);return d>=9.5&&d<=10.5?'S':undefined});
+    for(let k=0;k<8;k++){const a=k*0.785;
+      A.line(17,12,17+Math.cos(a)*9.5,12+Math.sin(a)*9.5,'S');
+      A.circ(17+Math.cos(a)*10.6,12+Math.sin(a)*10.6,1.5,['R','Y','G','C','M','O','W','V'][k]);}
+    A.circ(17,12,1.6,'Y');
+    A.line(17,12,12,22,'S');A.line(17,12,22,22,'S');})},
+  {name:'น้ำตก',make:()=>mk(34,28,A=>{
+    A.fill((x,y)=> y<6?'C':'N');
+    A.dots(30,371,c=>c==='N',['T','D']);
+    A.rect(12,4,10,16,'W');
+    A.fill((x,y,c)=>c==='W'&&(Math.floor(x)+Math.floor(y)*2)%5===0?'C':undefined);
+    A.ell(17,22,11,4,'C');A.ell(17,22,8,2.6,'W');
+    for(const x of [3,29])for(let y=6;y<14;y++)A.px(x+((y%3)?0:1),y,'G');
+    A.fill((x,y)=> y>=25?'B':undefined);})},
 ];
 
 const MAXLEVEL=100;
